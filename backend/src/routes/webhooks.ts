@@ -7,6 +7,7 @@ import type { GitHubWebhookPayload } from "../shared/types/github.js";
 import { verifyWebhookSignature } from "../modules/github/index.js";
 import { reviewAndPushDocs } from "../modules/doc-generator/index.js";
 import { getRepoToken, getProjectIdByRepoId, upsertRepoMeta } from "../db/index.js";
+import { logger } from "../logger/index.js";
 
 export const webhookRoutes = Router();
 
@@ -18,6 +19,7 @@ webhookRoutes.post("/webhooks/github", async (req: Request, res: Response) => {
     (typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? {}));
   const signature = req.headers["x-hub-signature-256"] as string;
   if (!verifyWebhookSignature(rawBody, signature ?? "", WEBHOOK_SECRET)) {
+    logger.warn("Webhook: invalid signature");
     res.status(401).json({ code: "INVALID_SIGNATURE", message: "Webhook signature verification failed." });
     return;
   }
@@ -61,6 +63,7 @@ webhookRoutes.post("/webhooks/github", async (req: Request, res: Response) => {
     });
     res.status(200).json({ ok: true, message: "Docs synced." });
   } catch (err) {
+    logger.error("Webhook: doc sync failed", { error: err });
     res.status(500).json({ code: "SYNC_FAILED", message: "Doc sync failed." });
   }
 });

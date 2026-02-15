@@ -5,6 +5,7 @@
  */
 
 import type { Project, ProjectDoc, RepoMeta } from "../shared/index.js";
+import { logger } from "../logger/index.js";
 import { getSupabase } from "./client.js";
 
 const REPO_META_TABLE = "repo_meta";
@@ -152,7 +153,10 @@ export async function createProject(row: {
     })
     .select()
     .single();
-  if (error || !data) throw new Error(error?.message ?? "Failed to create project");
+  if (error || !data) {
+    logger.error("DB: create project failed", { error: error?.message });
+    throw new Error(error?.message ?? "Failed to create project");
+  }
   return rowToProject(data as ProjectRow);
 }
 
@@ -192,7 +196,8 @@ export async function insertProjectDocs(
     path: d.path,
     content: d.content,
   }));
-  await supabase.from(PROJECT_DOCS_TABLE).insert(rows);
+  const { error } = await supabase.from(PROJECT_DOCS_TABLE).insert(rows);
+  if (error) logger.error("DB: insert project docs failed", { error: error.message, projectId });
 }
 
 /** List docs for a project, oldest first. */

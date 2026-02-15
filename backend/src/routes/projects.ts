@@ -5,6 +5,7 @@
 import { Router, Request, Response } from "express";
 import { getProjectsBySession, getProjectById, getDocsByProjectId } from "../db/index.js";
 import type { RequestWithSession } from "./session.js";
+import { logger } from "../logger/index.js";
 
 export const projectRoutes = Router();
 
@@ -18,6 +19,7 @@ projectRoutes.get("/projects", async (req: Request, res: Response) => {
     const projects = await getProjectsBySession(sessionId);
     res.json(projects);
   } catch (err) {
+    logger.error("Projects list failed", { error: err });
     res.status(500).json({
       code: "LIST_FAILED",
       message: "We couldn't load your projects. Please try again.",
@@ -41,6 +43,7 @@ projectRoutes.get("/projects/:id", async (req: Request, res: Response) => {
     const docs = await getDocsByProjectId(project.id);
     res.json({ project, docs });
   } catch (err) {
+    logger.error("Project fetch failed", { error: err });
     res.status(500).json({
       code: "FETCH_FAILED",
       message: "We couldn't load the project. Please try again.",

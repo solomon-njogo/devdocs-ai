@@ -6,6 +6,7 @@
 import type { NewIdeaRequest, NewIdeaResponse, GeneratedDocItem } from "../../shared/index.js";
 import { generatePRD, generateUserStories, generateUserJourneys } from "../ai-engine/index.js";
 import { createOrUpdateFile, readFile } from "../github/index.js";
+import { logger } from "../../logger/index.js";
 
 export interface GenerateAndPushResult {
   path: string;
@@ -45,6 +46,7 @@ export async function generateDocsFromIdea(
     { type: "user-story", path: "/docs/user-stories.md", content: userStories },
     { type: "user-journey", path: "/docs/user-journeys.md", content: userJourneys },
   ];
+  logger.info("Generated docs from idea", { projectName: idea.projectName });
   return { projectName: idea.projectName, docs };
 }
 
@@ -96,6 +98,7 @@ export async function reviewAndPushDocs(repoId: string, token: string): Promise<
     { type: "user_journey", path: paths[2], content: userJourneys },
   ];
 
+  logger.info("Review and push docs completed", { repoId, paths });
   return {
     repoId,
     paths,
