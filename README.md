@@ -66,6 +66,9 @@ Prerequisites:
 - DocItem: individual doc files under /docs with metadata (type, version, source)
 - AITrace: prompt/version history for traceability
 
+## Logging
+- Backend uses a structured logger (colorized console + optional file). Set `LOG_LEVEL` (error|warn|info|debug) and optionally `LOG_DIR` or `LOG_FILE` for persistent JSON-lines logs. See [backend/src/logger/README.md](backend/src/logger/README.md) for setup and usage.
+
 ## Security & Access
 - Use least-privilege tokens; store secrets securely.
 - Validate webhook signatures.

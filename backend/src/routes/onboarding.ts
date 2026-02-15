@@ -14,6 +14,7 @@ import {
   insertProjectDocs,
 } from "../db/index.js";
 import type { RequestWithSession } from "./session.js";
+import { logger } from "../logger/index.js";
 
 export const onboardingRoutes = Router();
 
@@ -43,6 +44,7 @@ onboardingRoutes.post("/onboarding/idea", async (req: Request, res: Response) =>
     const body = req.body as NewIdeaRequest;
     const { projectName, description } = body;
     if (!projectName?.trim() || !description?.trim()) {
+      logger.warn("Onboarding idea: missing project name or description");
       res.status(400).json({
         code: "INVALID_INPUT",
         message: "Please provide a project name and description.",
@@ -68,6 +70,7 @@ onboardingRoutes.post("/onboarding/idea", async (req: Request, res: Response) =>
       docs: result.docs,
     });
   } catch (err) {
+    logger.error("Onboarding idea: document generation failed", { error: err });
     res.status(500).json({
       code: "GENERATION_FAILED",
       message: "We couldn't generate the documents. Please try again.",
@@ -92,6 +95,7 @@ onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Respo
     }
     const { repoId } = req.body as ReviewRepoRequest;
     if (!repoId?.trim()) {
+      logger.warn("Onboarding review-repo: missing repoId");
       res.status(400).json({
         code: "INVALID_INPUT",
         message: "Please provide a repository (e.g. owner/repo).",
@@ -119,6 +123,7 @@ onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Respo
       summary: result.summary,
     });
   } catch (err) {
+    logger.error("Onboarding review-repo failed", { error: err });
     res.status(500).json({
       code: "REVIEW_FAILED",
       message: "We couldn't review the repository or push docs. Please try again.",

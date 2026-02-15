@@ -1,6 +1,7 @@
 import express, { Request } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { logger } from "./logger/index.js";
 import { docGeneratorRoutes } from "./routes/index.js";
 import { authRoutes } from "./routes/auth.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
@@ -34,5 +35,8 @@ app.use("/api", docGeneratorRoutes);
 app.use("/api", webhookRoutes);
 
 app.listen(PORT, () => {
-  console.log(`DevDocs API running at http://localhost:${PORT}`);
+  logger.info("DevDocs API listening", {
+    port: PORT,
+    url: `http://localhost:${PORT}`,
+  });
 });

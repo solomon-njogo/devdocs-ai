@@ -6,6 +6,7 @@ import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { getAuthorizationUrl, exchangeCodeForToken } from "../modules/github/index.js";
 import { getToken, setToken } from "../token-store.js";
+import { logger } from "../logger/index.js";
 
 export const authRoutes = Router();
 
@@ -18,6 +19,7 @@ authRoutes.get("/auth/github", (_req: Request, res: Response) => {
     const url = getAuthorizationUrl(state);
     res.redirect(url);
   } catch (err) {
+    logger.error("Auth: failed to start GitHub OAuth", { error: err });
     res.status(500).json({
       code: "OAUTH_ERROR",
       message: "Could not start GitHub sign-in. Please try again.",
@@ -45,6 +47,7 @@ authRoutes.get("/auth/github/callback", async (req: Request, res: Response) => {
       })
       .redirect(`${FRONTEND_ORIGIN}/onboarding?connected=1`);
   } catch (err) {
+    logger.error("Auth: GitHub callback failed", { error: err });
     res.redirect(`${FRONTEND_ORIGIN}/onboarding?error=oauth_failed`);
   }
 });
