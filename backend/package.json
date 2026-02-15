@@ -10,9 +10,14 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "express": "^4.21.0"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^20",
     "tsx": "^4.19.0",

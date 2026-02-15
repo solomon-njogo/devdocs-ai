@@ -7,6 +7,7 @@ Single source of truth for colors, typography, spacing, and components across th
 - **Consistency**: Use tokens for all visual decisions so the app feels coherent.
 - **Accessibility**: Focus rings, contrast, and reduced-motion are built into tokens and components.
 - **Responsive**: Mobile-first; use `sm:`, `md:`, `lg:` breakpoints for layout and typography.
+- **Design language**: Inspired by Notion—minimal, clean UI; soft neutrals; generous whitespace; subtle borders; **rounded corners everywhere**; calm, readable feel. Avoid visual clutter and hard edges.
 
 ## Theming (dark and light mode)
 
@@ -54,13 +55,15 @@ Tokens are defined in `styles/design-tokens.css` and exposed to Tailwind via `@t
 
 ### Border radius
 
-- `radius-sm`: 4px  
-- `radius-input`: 6px  
-- `radius-button` / `radius-md`: 8px  
-- `radius-badge`: 9999px (pill)  
-- `radius-lg`: 12px  
+**Rounded corners only:** Never use sharp corners (`rounded-none` or 0 radius). Always use theme radius classes (Tailwind v4 generates `rounded-{key}` from `@theme`’s `--radius-{key}`). Minimum radius is 4px.
 
-Use Tailwind: `rounded-radius-input`, `rounded-radius-button`, etc.
+- `radius-sm`: 4px → `rounded-sm`  
+- `radius-input`: 6px → `rounded-input`  
+- `radius-button` / `radius-md`: 8px → `rounded-button`, `rounded-md`  
+- `radius-badge`: 9999px (pill) → `rounded-badge`  
+- `radius-lg`: 12px → `rounded-lg`  
+
+Use Tailwind: `rounded-input`, `rounded-button`, `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-badge`.
 
 ### Shadows
 

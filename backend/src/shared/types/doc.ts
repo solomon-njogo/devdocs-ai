@@ -14,7 +14,7 @@ export interface DocItem {
   id: string;
   repoId: string;
   path: string;
-  type: "prd" | "user-story" | "architecture" | "api" | "changelog";
+  type: "prd" | "user-story" | "user-journey" | "architecture" | "api" | "changelog";
   version: string;
   source: string;
   content: string;

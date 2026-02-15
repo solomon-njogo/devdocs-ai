@@ -16,3 +16,6 @@ build/
 *.log
 .DS_Store
 *.tsbuildinfo
+
+# Supabase local CLI
+supabase/.temp/

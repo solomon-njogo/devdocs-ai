@@ -1,6 +1,7 @@
 /**
  * DevDocs AI Design System – design tokens
  * Light theme = :root, dark theme = .dark on <html>. @theme references vars so utilities follow theme.
+ * Rounded corners only: no sharp (0) corners; minimum radius 4px for all semantic radii.
  */
 
 /* ----- Light theme (default) ----- */
@@ -195,6 +196,7 @@
   --spacing-16: 64px;
   --spacing-20: 80px;
   --spacing-24: 96px;
+  /* Minimum 4px; no sharp corners */
   --radius-sm: 4px;
   --radius-input: 6px;
   --radius-button: 8px;
