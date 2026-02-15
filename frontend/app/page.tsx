@@ -12,14 +12,27 @@ function projectTypeLabel(type: ProjectType): string {
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    setProjects(getProjects());
+    let cancelled = false;
+    getProjects()
+      .then((data) => {
+        if (!cancelled) setProjects(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load projects.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (!mounted) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <p className="text-text-muted">Loading…</p>
@@ -43,7 +56,13 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h2 className="text-lg font-medium text-text-primary mb-4">Projects</h2>
 
-        {projects.length === 0 ? (
+        {error && (
+          <div className="rounded-lg border border-semantic-error-text/50 bg-semantic-error-bg px-4 py-3 text-sm text-semantic-error-text mb-4">
+            {error}
+          </div>
+        )}
+
+        {!error && projects.length === 0 ? (
           <Card elevated className="text-center py-12">
             <p className="text-text-secondary mb-2">No projects yet.</p>
             <p className="text-text-muted text-sm mb-6">
@@ -53,7 +72,7 @@ export default function DashboardPage() {
               <Button variant="primary">Create new project</Button>
             </Link>
           </Card>
-        ) : (
+        ) : !error ? (
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
               <li key={project.id}>
@@ -100,7 +119,7 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
       </main>
     </div>
   );

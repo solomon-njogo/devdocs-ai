@@ -6,7 +6,7 @@ import { Router, Request, Response } from "express";
 import type { GitHubWebhookPayload } from "../shared/types/github.js";
 import { verifyWebhookSignature } from "../modules/github/index.js";
 import { reviewAndPushDocs } from "../modules/doc-generator/index.js";
-import { getRepoToken, upsertRepoMeta } from "../db/index.js";
+import { getRepoToken, getProjectIdByRepoId, upsertRepoMeta } from "../db/index.js";
 
 export const webhookRoutes = Router();
 
@@ -51,11 +51,13 @@ webhookRoutes.post("/webhooks/github", async (req: Request, res: Response) => {
   }
   try {
     const result = await reviewAndPushDocs(repoId, token);
+    const projectId = await getProjectIdByRepoId(repoId);
     await upsertRepoMeta({
       id: repoId,
       repoId,
       lastDocState: result.paths.join(","),
       updatedAt: new Date().toISOString(),
+      projectId: projectId ?? undefined,
     });
     res.status(200).json({ ok: true, message: "Docs synced." });
   } catch (err) {

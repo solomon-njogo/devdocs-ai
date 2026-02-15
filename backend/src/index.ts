@@ -4,6 +4,8 @@ import cors from "cors";
 import { docGeneratorRoutes } from "./routes/index.js";
 import { authRoutes } from "./routes/auth.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
+import { projectRoutes } from "./routes/projects.js";
+import { ensureSessionId } from "./routes/session.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 
 const app = express();
@@ -19,6 +21,7 @@ app.use(
   })
 );
 app.use(cookieParser());
+app.use(ensureSessionId);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "devdocs-api" });
@@ -26,6 +29,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", authRoutes);
 app.use("/api", onboardingRoutes);
+app.use("/api", projectRoutes);
 app.use("/api", docGeneratorRoutes);
 app.use("/api", webhookRoutes);
 

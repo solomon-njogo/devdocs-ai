@@ -3,6 +3,8 @@
  * Used by onboarding flow (new idea vs existing repo).
  */
 
+import type { Project } from "./project.js";
+
 /** User selection: new idea or existing project. */
 export type ProjectStatus = "new_idea" | "existing";
 
@@ -26,6 +28,7 @@ export interface GeneratedDocItem {
 
 /** Response after generating docs from a new idea. */
 export interface NewIdeaResponse {
+  project: Project;
   projectName: string;
   docs: GeneratedDocItem[];
 }
@@ -37,6 +40,7 @@ export interface ReviewRepoRequest {
 
 /** Response after reviewing repo and pushing docs. */
 export interface ReviewRepoResponse {
+  project: Project;
   repoId: string;
   paths: string[];
   summary: string;

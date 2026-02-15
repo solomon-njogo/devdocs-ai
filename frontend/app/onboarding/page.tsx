@@ -7,17 +7,19 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useRouter } from "next/navigation";
 import { api, authGitHubUrl } from "@/lib/api";
-import { addProject } from "@/lib/projects";
+import type { Project } from "@/lib/projects";
 
 type Step = 1 | 2 | 3 | 4;
 type ProjectStatus = "new_idea" | "existing" | null;
 
 interface NewIdeaResponse {
+  project: Project;
   projectName: string;
   docs: { type: string; path: string; content: string }[];
 }
 
 interface ReviewRepoResponse {
+  project: Project;
   repoId: string;
   paths: string[];
   summary: string;
@@ -277,12 +279,6 @@ export default function OnboardingPage() {
                 </div>
                 <Button
                   onClick={() => {
-                    if (ideaResult) {
-                      addProject({
-                        name: ideaResult.projectName,
-                        type: "new_idea",
-                      });
-                    }
                     setStep(4);
                   }}
                 >
@@ -306,13 +302,6 @@ export default function OnboardingPage() {
                 </a>
                 <Button
                   onClick={() => {
-                    if (repoResult) {
-                      addProject({
-                        name: repoResult.repoId,
-                        type: "existing",
-                        repoId: repoResult.repoId,
-                      });
-                    }
                     setStep(4);
                   }}
                 >
@@ -331,7 +320,12 @@ export default function OnboardingPage() {
                 ? "For existing repos we keep docs in sync on every push. Add a webhook in your repo settings pointing to this app to enable automatic doc updates."
                 : "Your docs are ready. When you create or connect a repository, you can push these docs to it from the app."}
             </p>
-            <Button variant="primary" onClick={() => router.push("/")}>
+            <Button
+              variant="primary"
+              onClick={() => {
+                router.push("/");
+              }}
+            >
               Done
             </Button>
           </Card>

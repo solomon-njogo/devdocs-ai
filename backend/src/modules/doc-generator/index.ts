@@ -3,7 +3,7 @@
  * Public API for this module. See README.md for scope and dependencies.
  */
 
-import type { NewIdeaRequest, NewIdeaResponse, GeneratedDocItem, ReviewRepoResponse } from "../../shared/index.js";
+import type { NewIdeaRequest, NewIdeaResponse, GeneratedDocItem } from "../../shared/index.js";
 import { generatePRD, generateUserStories, generateUserJourneys } from "../ai-engine/index.js";
 import { createOrUpdateFile, readFile } from "../github/index.js";
 
@@ -26,8 +26,11 @@ function ideaToInput(idea: NewIdeaRequest): string {
 
 /**
  * Generate PRD, user stories, and user journeys from a new idea (no repo).
+ * Route adds project and returns full NewIdeaResponse.
  */
-export async function generateDocsFromIdea(idea: NewIdeaRequest): Promise<NewIdeaResponse> {
+export async function generateDocsFromIdea(
+  idea: NewIdeaRequest
+): Promise<Omit<NewIdeaResponse, "project">> {
   const input = ideaToInput(idea);
   const context = { source: "idea" as const, projectName: idea.projectName };
 
@@ -45,10 +48,26 @@ export async function generateDocsFromIdea(idea: NewIdeaRequest): Promise<NewIde
   return { projectName: idea.projectName, docs };
 }
 
+/** Doc item shape returned by reviewAndPushDocs for persisting to project_docs. */
+export type ReviewRepoDocItem = {
+  type: "prd" | "user_story" | "user_journey";
+  path: string;
+  content: string;
+};
+
+/** Result from reviewAndPushDocs (route adds project to form ReviewRepoResponse). */
+export interface ReviewRepoResult {
+  repoId: string;
+  paths: string[];
+  summary: string;
+  docs: ReviewRepoDocItem[];
+}
+
 /**
  * Review repo (read key files), generate docs, and push to /docs.
+ * Returns generated docs so the route can persist them to project_docs.
  */
-export async function reviewAndPushDocs(repoId: string, token: string): Promise<ReviewRepoResponse> {
+export async function reviewAndPushDocs(repoId: string, token: string): Promise<ReviewRepoResult> {
   const codebaseSummary = await buildCodebaseSummary(repoId, token);
   const context = { source: "repo" as const, repoId, codebaseSummary, projectName: repoId };
 
@@ -71,10 +90,17 @@ export async function reviewAndPushDocs(repoId: string, token: string): Promise<
     createOrUpdateFile(repoId, paths[2], userJourneys, token),
   ]);
 
+  const docs: ReviewRepoDocItem[] = [
+    { type: "prd", path: paths[0], content: prd },
+    { type: "user_story", path: paths[1], content: userStories },
+    { type: "user_journey", path: paths[2], content: userJourneys },
+  ];
+
   return {
     repoId,
     paths,
     summary: `Generated and pushed PRD, user stories, and user journeys to /${basePath}.`,
+    docs,
   };
 }
 
