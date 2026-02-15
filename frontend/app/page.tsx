@@ -1,43 +1,106 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { getProjects, type Project, type ProjectType } from "@/lib/projects";
+
+function projectTypeLabel(type: ProjectType): string {
+  return type === "new_idea" ? "New idea" : "Existing repo";
+}
+
+export default function DashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setProjects(getProjects());
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <p className="text-text-muted">Loading…</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            DevDocs AI
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            AI-powered development documentation assistant. Auto-generate PRDs,
-            user stories, architecture docs, and API docs from your code.
-          </p>
+    <div className="min-h-screen bg-bg-primary text-text-primary">
+      <header className="border-b border-surface-border bg-bg-secondary">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-xl font-semibold text-text-primary">DevDocs AI</h1>
+          <Link href="/onboarding">
+            <Button variant="primary" size="md">
+              Create new project
+            </Button>
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Connect GitHub
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="/docs"
-            rel="noopener noreferrer"
-          >
-            View Docs
-          </a>
-        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 className="text-lg font-medium text-text-primary mb-4">Projects</h2>
+
+        {projects.length === 0 ? (
+          <Card elevated className="text-center py-12">
+            <p className="text-text-secondary mb-2">No projects yet.</p>
+            <p className="text-text-muted text-sm mb-6">
+              Create a new project to generate PRDs, user stories, and docs from an idea or existing repo.
+            </p>
+            <Link href="/onboarding">
+              <Button variant="primary">Create new project</Button>
+            </Link>
+          </Card>
+        ) : (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map((project) => (
+              <li key={project.id}>
+                <Card
+                  title={project.name}
+                  elevated
+                  className="h-full flex flex-col hover:border-action-primary/50 transition-colors"
+                >
+                  <div className="flex flex-col gap-2 flex-1">
+                    <span className="inline-flex items-center text-xs font-medium text-text-muted bg-surface-hover px-2 py-0.5 rounded-badge w-fit">
+                      {projectTypeLabel(project.type)}
+                    </span>
+                    {project.repoId && (
+                      <a
+                        href={`https://github.com/${project.repoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-action-primary hover:underline truncate"
+                      >
+                        {project.repoId}
+                      </a>
+                    )}
+                    <p className="text-xs text-text-muted mt-auto">
+                      {new Date(project.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-surface-border flex gap-2">
+                    {project.repoId ? (
+                      <a
+                        href={`https://github.com/${project.repoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1"
+                      >
+                        <Button variant="secondary" size="sm" className="w-full">
+                          View on GitHub
+                        </Button>
+                      </a>
+                    ) : (
+                      <span className="text-text-muted text-sm flex items-center">Docs generated</span>
+                    )}
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
       </main>
     </div>
   );

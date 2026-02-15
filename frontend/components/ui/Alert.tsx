@@ -24,7 +24,7 @@ const variantClasses: Record<AlertVariant, string> = {
  */
 export function Alert({ variant = "info", title, children, className = "" }: AlertProps) {
   const base =
-    "rounded-radius-input border px-4 py-3 text-base";
+    "rounded-input border px-4 py-3 text-base";
   const variantClass = variantClasses[variant];
 
   return (

@@ -1,6 +1,10 @@
 {
   "name": "DevDocs AI Design System",
   "version": "1.0.0",
+  "designPrinciples": [
+    "All corners use rounded radius; no sharp (0) corners",
+    "Notion-inspired minimalism: clean layout, soft neutrals, subtle borders, rounded corners everywhere"
+  ],
   "themes": {
     "light": "default :root variables in design-tokens.css",
     "dark": ".dark class on <html>; variables in design-tokens.css"
@@ -90,6 +94,7 @@
     "24": "96px"
   },
   "radius": {
+    "_note": "Rounded only; minimum 4px; no sharp corners",
     "sm": "4px",
     "input": "6px",
     "button": "8px",

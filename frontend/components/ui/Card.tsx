@@ -22,7 +22,7 @@ export function Card({
   ...props
 }: CardProps) {
   const base =
-    "rounded-radius-lg border border-surface-border bg-bg-secondary overflow-hidden";
+    "rounded-lg border border-surface-border bg-bg-secondary overflow-hidden";
   const shadow = elevated ? "shadow-md" : "";
 
   return (
