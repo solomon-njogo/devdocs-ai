@@ -1,22 +1,23 @@
 /**
  * Project list and project detail (with linked docs).
+ * Requires authentication; uses userId from JWT.
  */
 
 import { Router, Request, Response } from "express";
-import { getProjectsBySession, getProjectById, getDocsByProjectId } from "../db/index.js";
-import type { RequestWithSession } from "./session.js";
+import { getProjectsByUserId, getProjectById, getDocsByProjectId } from "../db/index.js";
+import type { RequestWithUser } from "../shared/index.js";
 import { logger } from "../logger/index.js";
 
 export const projectRoutes = Router();
 
 projectRoutes.get("/projects", async (req: Request, res: Response) => {
   try {
-    const sessionId = (req as RequestWithSession).sessionId;
-    if (!sessionId) {
-      res.status(400).json({ code: "NO_SESSION", message: "Session required." });
+    const userId = (req as RequestWithUser).userId;
+    if (!userId) {
+      res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
       return;
     }
-    const projects = await getProjectsBySession(sessionId);
+    const projects = await getProjectsByUserId(userId);
     res.json(projects);
   } catch (err) {
     logger.error("Projects list failed", { error: err });
@@ -29,14 +30,14 @@ projectRoutes.get("/projects", async (req: Request, res: Response) => {
 
 projectRoutes.get("/projects/:id", async (req: Request, res: Response) => {
   try {
-    const sessionId = (req as RequestWithSession).sessionId;
+    const userId = (req as RequestWithUser).userId;
     const { id } = req.params;
-    if (!sessionId || !id) {
+    if (!userId || !id) {
       res.status(400).json({ code: "INVALID_INPUT", message: "Project id required." });
       return;
     }
-    const project = await getProjectById(id);
-    if (!project || project.sessionId !== sessionId) {
+    const project = await getProjectById(id, userId);
+    if (!project) {
       res.status(404).json({ code: "NOT_FOUND", message: "Project not found." });
       return;
     }

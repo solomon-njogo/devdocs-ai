@@ -1,5 +1,5 @@
 /**
- * Supabase client singleton. Uses SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY).
+ * Supabase client for DB. Uses SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY).
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";

@@ -15,6 +15,7 @@ const PROJECT_DOCS_TABLE = "project_docs";
 type ProjectRow = {
   id: string;
   session_id: string;
+  user_id: string | null;
   name: string;
   description: string | null;
   type: string;
@@ -38,6 +39,7 @@ function rowToProject(row: ProjectRow): Project {
   return {
     id: row.id,
     sessionId: row.session_id,
+    userId: row.user_id ?? undefined,
     name: row.name,
     description: row.description ?? undefined,
     type: row.type as "new_idea" | "existing",
@@ -128,9 +130,10 @@ export async function getRepoToken(repoId: string): Promise<string | null> {
   return (data as { token: string } | null)?.token ?? null;
 }
 
-/** Create a project; returns the created project with id from DB. */
+/** Create a project; returns the created project with id from DB. Requires userId for ownership. */
 export async function createProject(row: {
-  sessionId: string;
+  userId: string;
+  sessionId?: string | null;
   name: string;
   description?: string | null;
   type: "new_idea" | "existing";
@@ -143,7 +146,8 @@ export async function createProject(row: {
   const { data, error } = await supabase
     .from(PROJECTS_TABLE)
     .insert({
-      session_id: row.sessionId,
+      user_id: row.userId,
+      session_id: row.sessionId ?? null,
       name: row.name,
       description: row.description ?? null,
       type: row.type,
@@ -160,24 +164,26 @@ export async function createProject(row: {
   return rowToProject(data as ProjectRow);
 }
 
-/** List projects for a session, newest first. */
-export async function getProjectsBySession(sessionId: string): Promise<Project[]> {
+/** List projects for a user, newest first. */
+export async function getProjectsByUserId(userId: string): Promise<Project[]> {
   const supabase = getSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase
     .from(PROJECTS_TABLE)
     .select("*")
-    .eq("session_id", sessionId)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error || !data) return [];
   return (data as ProjectRow[]).map(rowToProject);
 }
 
-/** Get a single project by id; returns null if not found. */
-export async function getProjectById(id: string): Promise<Project | null> {
+/** Get a single project by id; returns null if not found. If userId is provided, enforces ownership. */
+export async function getProjectById(id: string, userId?: string): Promise<Project | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
-  const { data, error } = await supabase.from(PROJECTS_TABLE).select("*").eq("id", id).maybeSingle();
+  let query = supabase.from(PROJECTS_TABLE).select("*").eq("id", id);
+  if (userId) query = query.eq("user_id", userId);
+  const { data, error } = await query.maybeSingle();
   if (error || !data) return null;
   return rowToProject(data as ProjectRow);
 }

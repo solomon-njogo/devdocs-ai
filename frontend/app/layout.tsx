@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthGuard } from "@/components/AuthGuard";
+import { SupabaseEnvProvider } from "@/components/SupabaseEnvProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -35,6 +37,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabaseUrl = process.env.SUPABASE_URL ?? "";
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? "";
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -42,8 +46,16 @@ export default function RootLayout({
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-ui antialiased`}
+        suppressHydrationWarning
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <SupabaseEnvProvider
+          url={supabaseUrl}
+          anonKey={supabaseAnonKey}
+        >
+          <ThemeProvider>
+            <AuthGuard>{children}</AuthGuard>
+          </ThemeProvider>
+        </SupabaseEnvProvider>
       </body>
     </html>
   );

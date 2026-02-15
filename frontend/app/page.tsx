@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { UserMenu } from "@/components/UserMenu";
 import { getProjects, type Project, type ProjectType } from "@/lib/projects";
 
 function projectTypeLabel(type: ProjectType): string {
@@ -45,11 +46,14 @@ export default function DashboardPage() {
       <header className="border-b border-surface-border bg-bg-secondary">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-xl font-semibold text-text-primary">DevDocs AI</h1>
-          <Link href="/onboarding">
-            <Button variant="primary" size="md">
-              Create new project
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <UserMenu />
+            <Link href="/onboarding">
+              <Button variant="primary" size="md">
+                Create new project
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
