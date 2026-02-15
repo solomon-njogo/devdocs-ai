@@ -1,0 +1,157 @@
+{
+  "name": "DevDocs AI Design System",
+  "version": "1.0.0",
+  "themes": {
+    "light": "default :root variables in design-tokens.css",
+    "dark": ".dark class on <html>; variables in design-tokens.css"
+  },
+  "colors": {
+    "background": {
+      "primary": "#0d1117",
+      "secondary": "#161b22"
+    },
+    "surface": {
+      "sidebar": "#0d1117",
+      "header": "#0d1117",
+      "editor": "#0d1117",
+      "hover": "#161b22",
+      "border": "#30363d"
+    },
+    "action": {
+      "primary": "#58a6ff",
+      "primaryHover": "#4a8edf",
+      "success": "#238636",
+      "successHover": "#2ea043"
+    },
+    "text": {
+      "primary": "#f0f6fc",
+      "secondary": "#c9d1d9",
+      "muted": "#8b949e",
+      "faded": "#484f58"
+    },
+    "semantic": {
+      "success": {
+        "text": "#238636",
+        "bg": "rgba(35, 134, 54, 0.2)"
+      },
+      "error": {
+        "text": "#da3633",
+        "bg": "rgba(218, 54, 51, 0.2)"
+      },
+      "warning": {
+        "text": "#d29922",
+        "bg": "rgba(210, 153, 34, 0.2)"
+      },
+      "info": {
+        "text": "#58a6ff",
+        "bg": "rgba(88, 166, 255, 0.2)"
+      }
+    }
+  },
+  "typography": {
+    "fonts": {
+      "ui": "Inter, system-ui, sans-serif",
+      "mono": "JetBrains Mono, Fira Code, monospace"
+    },
+    "sizes": {
+      "xs": "10px",
+      "sm": "12px",
+      "base": "14px",
+      "md": "16px",
+      "lg": "18px",
+      "xl": "20px"
+    },
+    "weights": {
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeights": {
+      "tight": "1.25",
+      "normal": "1.5",
+      "relaxed": "1.625",
+      "editor": "24px"
+    }
+  },
+  "spacing": {
+    "0": "0",
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px",
+    "16": "64px",
+    "20": "80px",
+    "24": "96px"
+  },
+  "radius": {
+    "sm": "4px",
+    "input": "6px",
+    "button": "8px",
+    "md": "8px",
+    "badge": "9999px",
+    "lg": "12px"
+  },
+  "shadows": {
+    "sm": "0 1px 2px rgba(0, 0, 0, 0.3)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4)"
+  },
+  "motion": {
+    "duration": {
+      "fast": "150ms",
+      "normal": "200ms",
+      "slow": "300ms"
+    },
+    "ease": {
+      "default": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "inOut": "ease-in-out"
+    }
+  },
+  "zIndex": {
+    "dropdown": 1000,
+    "sticky": 1020,
+    "modal": 1050,
+    "toast": 1100
+  },
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px",
+    "2xl": "1536px"
+  },
+  "components": {
+    "buttons": {
+      "borderRadius": "8px",
+      "fontSize": "14px",
+      "padding": "8px 16px"
+    },
+    "inputs": {
+      "borderRadius": "6px",
+      "borderWidth": "1px",
+      "borderColor": "#30363d",
+      "padding": "6px 12px"
+    },
+    "badges": {
+      "borderRadius": "9999px",
+      "fontSize": "10px",
+      "textTransform": "uppercase"
+    }
+  },
+  "layout": {
+    "sidebarLeftWidth": "250px",
+    "sidebarRightWidth": "300px",
+    "headerHeight": "64px",
+    "statusBarHeight": "24px"
+  },
+  "accessibility": {
+    "focusRing": "2px solid #58a6ff",
+    "focusRingOffset": "2px"
+  }
+}
