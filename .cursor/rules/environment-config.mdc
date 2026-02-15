@@ -1,0 +1,30 @@
+---
+description: Env vars, .env.example, fail-fast config
+globs: backend/**/*.ts frontend/**/*.ts frontend/**/*.tsx
+alwaysApply: false
+---
+
+# Environment and Config
+
+## Documentation
+
+- **Required env vars**: Document in README and in a `.env.example` (no real values)
+- **Naming**: Use `NEXT_PUBLIC_*` only for values that are safe to expose to the browser (e.g. `NEXT_PUBLIC_API_BASE`)
+
+## Validation
+
+- **Fail fast**: Validate config at startup (e.g. with Zod or a small schema); exit or throw if required vars are missing
+- **No hardcoded secrets**: Read all secrets from environment; never commit default API keys or tokens
+
+## Example
+
+```typescript
+// BAD — silent default, no validation
+const apiKey = process.env.OPENROUTER_API_KEY || '';
+
+// GOOD — validate at startup
+const env = z.object({
+  OPENROUTER_API_KEY: z.string().min(1, 'OPENROUTER_API_KEY required'),
+  GITHUB_TOKEN: z.string().optional(),
+}).parse(process.env);
+```

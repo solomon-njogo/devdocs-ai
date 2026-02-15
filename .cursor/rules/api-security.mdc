@@ -1,0 +1,45 @@
+---
+description: API contracts, auth, secrets, webhooks, input validation
+globs: backend/**/*.ts
+alwaysApply: false
+---
+
+# API and Security
+
+## API Contracts
+
+- **Validate input**: Check request body/query against types in `shared/types/api.ts` before use
+- **Error responses**: Return `ApiError` shape `{ code: string, message: string }` with appropriate status (400, 401, 500); use a **user-friendly `message`** (e.g. "Please provide a repository and some input.") — never expose raw errors or stack traces to the client
+- **No business logic in routes**: Routes validate, extract token, then delegate to modules
+
+## Auth and Secrets
+
+- **Bearer token**: Validate token (e.g. from `Authorization` header) before calling module logic
+- **Never log** tokens, API keys, or secrets
+- **Secrets from env only**: Use `process.env.OPENROUTER_API_KEY`, `process.env.GITHUB_TOKEN`, etc.; never hardcode
+
+## Webhooks and Input
+
+- **GitHub webhooks**: Verify signature (e.g. `X-Hub-Signature-256`) before processing payload
+- **Validate and sanitize** user input; reject invalid shapes early
+
+## Example
+
+```typescript
+// BAD — no validation, token in logs
+const token = req.headers.authorization;
+console.log('Token', token);
+await doWork(req.body);
+
+// GOOD — validate, log, user-friendly message, consistent error shape
+const { repoId, input } = req.body as GeneratePRDRequest;
+if (!repoId || !input) {
+  logger.warn('Generate PRD called with missing input', { hasRepoId: !!repoId, hasInput: !!input });
+  res.status(400).json({ code: 'INVALID_INPUT', message: 'Please provide a repository and some input.' });
+  return;
+}
+const token = req.headers.authorization?.replace('Bearer ', '') ?? '';
+const result = await generateAndPushPRD(repoId, input, token);
+logger.info('PRD generated', { repoId, path: result.path });
+res.json(result);
+```

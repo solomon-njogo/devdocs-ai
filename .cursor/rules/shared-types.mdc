@@ -1,0 +1,31 @@
+---
+description: Types in shared only, exports, JSDoc
+globs: backend/src/shared/**/*
+alwaysApply: false
+---
+
+# Shared Types
+
+## Single Source of Truth
+
+- **All shared types live in `backend/src/shared/`**: Modules must not define their own copies of API or domain types
+- **Export via `shared/index.ts`**: Other code imports from `../shared` or `@/shared`, not deep paths like `../shared/types/api`
+- **Prefer interfaces** for API contracts and shared entities; use type aliases for unions/utility types
+
+## Documentation
+
+- **JSDoc for non-obvious types**: Document purpose and constraints for types that are part of the public API or used across modules
+
+## Example
+
+```typescript
+// In shared/types/api.ts — single source for API shape
+/** Request body for the generate-PRD endpoint. */
+export interface GeneratePRDRequest {
+  repoId: string;
+  input: string;
+}
+
+// Other modules import from shared
+import type { GeneratePRDRequest, ApiError } from '../../shared';
+```

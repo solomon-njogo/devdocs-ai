@@ -1,0 +1,95 @@
+---
+description: Core coding standards - clean code, modularization, best practices
+alwaysApply: true
+---
+
+# Coding Standards
+
+## 1. Clean Code
+
+- **Meaningful names**: Variables, functions, and types should reveal intent
+- **DRY**: Do not repeat logic; extract shared code
+- **Single responsibility**: One function/class does one thing well
+- **Remove dead code**: Delete unused code; do not comment it out
+
+## 2. Modularization
+
+- **One concern per module**: Split by responsibility, not by feature sprawl
+- **Small focused modules**: Avoid God objects; keep files under ~300 lines
+- **Index exports**: Expose public API via `index.ts`; no deep-path imports from other modules
+- **Avoid deep nesting**: Max 3–4 levels; extract to smaller functions
+
+## 3. Best Practices
+
+- **Error handling**: Catch, log, and rethrow or handle; never swallow errors
+- **Type safety**: Use strict types; avoid `any`; prefer interfaces over inline types
+- **Consistent formatting**: Follow project style (run linter/formatter)
+
+## 4. Design Principles and System
+
+- **Read devdocs-architecture.mdc before editing** — Follow module boundaries and dependency flow
+- **SOLID where applicable**: Prefer composition over inheritance; inject dependencies
+- **Respect existing patterns** in the codebase
+
+## 5. Simple Code
+
+- **YAGNI**: Do not add abstraction until you need it
+- **Readability over cleverness**: Prefer clear code over clever tricks
+- **Straightforward solutions**: Avoid over-engineering
+
+## 6. Code Documentation
+
+- **Public APIs**: Add JSDoc (TS/JS) or docstrings for exported functions and types
+- **Complex logic**: Add brief inline comments explaining *why*, not *what*
+- **Avoid redundant comments**: Do not comment obvious code
+
+## 7. Logging and User-Facing Messages
+
+- **Always add logging**: Log errors, important operations, and key state changes (use a structured logger; avoid `console.log` for production code paths)
+- **User-friendly messages only**: Expose clear, non-technical messages to the user for success, errors, and info — never raw stack traces, internal error codes, or log dumps in UI or API responses
+- **Map internally to externally**: Log full details (e.g. error cause, stack) server-side; return a short, safe message to the client (e.g. "Something went wrong. Please try again." or "Document generated successfully.")
+
+### Example: Good vs Bad Documentation
+
+```typescript
+// BAD — redundant
+const x = 5; // set x to 5
+
+// GOOD — documents intent
+/** Generates a PRD from repo context. Returns markdown or throws on LLM failure. */
+export async function generatePRD(ctx: RepoContext): Promise<string> {
+  // Retry once on rate limit to avoid failing transiently
+  return callLLMWithRetry(buildPrompt(ctx));
+}
+```
+
+### Example: Modular vs Monolithic
+
+```typescript
+// BAD — one file does everything
+// services/doEverything.ts — 800 lines mixing API, validation, DB, email
+
+// GOOD — split by concern
+// services/auth.ts — login, token validation
+// services/validation.ts — input schemas
+// services/email.ts — send notifications
+// index.ts — re-exports
+```
+
+### Example: Logging and User-Facing Messages
+
+```typescript
+// BAD — raw error to user, no logging
+catch (err) {
+  res.status(500).json({ message: err.message });
+}
+
+// GOOD — log internally, friendly message to user
+catch (err) {
+  logger.error('PRD generation failed', { error: err, repoId });
+  res.status(500).json({
+    code: 'GENERATION_FAILED',
+    message: 'We couldn\'t generate the document. Please try again in a moment.',
+  });
+}
+```
