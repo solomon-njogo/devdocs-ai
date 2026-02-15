@@ -1,0 +1,36 @@
+---
+description: Prompt layout, placeholders, AITrace, rate limits
+globs: backend/src/modules/ai-engine/**/*
+alwaysApply: false
+---
+
+# Prompts and AI Engine
+
+## Prompt Structure
+
+- **Dedicated files**: Keep prompt templates in a `prompts/` (or similar) directory; avoid large inline strings in code
+- **Placeholders**: Use clear, consistent placeholders (e.g. `{{repoName}}`, `{{input}}`, `{{context}}`)
+- **Output format**: State expected format in the prompt (markdown, JSON, etc.) so parsing is reliable
+
+## Observability and Resilience
+
+- **AITrace**: Log prompt version or id and relevant metadata so runs are traceable
+- **Rate limits**: Handle 429 responses with retries (e.g. backoff); do not fail silently
+- **Errors**: Surface LLM failures to callers; do not return fake or empty content on error
+
+## Security
+
+- **No secrets in prompts**: Never inject API keys, tokens, or PII into prompt text sent to the LLM
+
+## Example
+
+```typescript
+// BAD — inline prompt, no structure
+const prompt = 'Generate a PRD for ' + input;
+
+// GOOD — template file with placeholders, traceable
+// prompts/prd.ts: "Generate a PRD for {{repoName}}.\n\nInput: {{input}}\n\nOutput as markdown."
+const filled = fillTemplate(loadPrompt('prd'), { repoName, input });
+await recordAITrace({ promptId: 'prd', version: 1 });
+return callLLMWithRetry(filled);
+```

@@ -1,0 +1,41 @@
+---
+description: Next.js and React patterns, Tailwind, responsive UI
+globs: frontend/**/*.ts frontend/**/*.tsx
+alwaysApply: false
+---
+
+# Frontend / Next.js
+
+## Component Model
+
+- **Server Components by default**: Do not add `"use client"` unless the component uses hooks, browser APIs, or event handlers
+- **Feature folders**: Colocate components with their feature; shared UI goes in `components/`
+- **Type props**: Define interfaces for component props; avoid `any`
+
+## Styling and Layout
+
+- **Tailwind only**: Use Tailwind classes; avoid inline styles except for dynamic values
+- **Responsive**: Mobile-first; use `sm:`, `md:`, `lg:` breakpoints so UI adapts to screen size
+- **Theme consistency**: Prefer `globals.css` variables or a central `lib/theme.ts` for colors and spacing
+
+## Assets and Data
+
+- **Images**: Use Next.js `Image` for images; set `alt`, `width`, `height` (or fill)
+- **API calls**: Use route handlers, server actions, or a dedicated API layer; type responses from backend
+
+## Example
+
+```tsx
+// Server Component (default) — no "use client"
+export default async function DocList() {
+  const docs = await getDocs();
+  return <DocGrid items={docs} />;
+}
+
+// Client only when needed
+"use client";
+export function DocGrid({ items }: { items: DocItem[] }) {
+  const [selected, setSelected] = useState<string | null>(null);
+  return (/* ... */);
+}
+```
