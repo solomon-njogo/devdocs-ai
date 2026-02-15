@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { UserMenu } from "@/components/UserMenu";
 import { useRouter } from "next/navigation";
-import { api, authGitHubUrl } from "@/lib/api";
+import { api, getAuthGitHubUrl } from "@/lib/api";
 import type { Project } from "@/lib/projects";
 
 type Step = 1 | 2 | 3 | 4;
@@ -40,6 +41,7 @@ export default function OnboardingPage() {
   const [ideaResult, setIdeaResult] = useState<NewIdeaResponse | null>(null);
   const [repoResult, setRepoResult] = useState<ReviewRepoResponse | null>(null);
   const [connected, setConnected] = useState(false);
+  const [connectingGitHub, setConnectingGitHub] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -99,13 +101,16 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-2xl flex flex-col gap-8">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between flex-wrap gap-2">
           <Link href="/" className="text-lg font-semibold text-action-primary hover:underline">
             DevDocs AI
           </Link>
-          <span className="text-sm text-text-muted">
-            Step {step} of 4
-          </span>
+          <div className="flex items-center gap-3">
+            <UserMenu />
+            <span className="text-sm text-text-muted">
+              Step {step} of 4
+            </span>
+          </div>
         </header>
 
         {error && (
@@ -221,11 +226,24 @@ export default function OnboardingPage() {
                 <p className="text-text-secondary mb-4">
                   Connect your GitHub account so we can read your repo and push generated docs.
                 </p>
-                <a href={authGitHubUrl()}>
-                  <Button variant="primary" size="lg">
-                    Connect GitHub
-                  </Button>
-                </a>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  disabled={connectingGitHub}
+                  onClick={async () => {
+                    setConnectingGitHub(true);
+                    setError(null);
+                    try {
+                      const url = await getAuthGitHubUrl();
+                      window.location.href = url;
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Could not start GitHub connect. Please try again.");
+                      setConnectingGitHub(false);
+                    }
+                  }}
+                >
+                  {connectingGitHub ? "Redirecting…" : "Connect GitHub"}
+                </Button>
               </>
             ) : (
               <form onSubmit={handleReviewRepo} className="flex flex-col gap-4">

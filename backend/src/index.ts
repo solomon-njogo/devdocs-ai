@@ -1,9 +1,19 @@
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootEnv = path.resolve(__dirname, "..", "..", ".env");
+dotenv.config({ path: rootEnv });
+dotenv.config();
+
 import express, { Request } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { logger } from "./logger/index.js";
 import { docGeneratorRoutes } from "./routes/index.js";
 import { authRoutes } from "./routes/auth.js";
+import { requireAuth } from "./routes/auth-middleware.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { projectRoutes } from "./routes/projects.js";
 import { ensureSessionId } from "./routes/session.js";
@@ -29,8 +39,8 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", authRoutes);
-app.use("/api", onboardingRoutes);
-app.use("/api", projectRoutes);
+app.use("/api", requireAuth, onboardingRoutes);
+app.use("/api", requireAuth, projectRoutes);
 app.use("/api", docGeneratorRoutes);
 app.use("/api", webhookRoutes);
 

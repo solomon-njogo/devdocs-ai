@@ -1,6 +1,7 @@
 /**
  * Onboarding route handlers: new idea and review repo.
  * Creates project and project_docs; returns project in response.
+ * Requires authentication; uses userId from JWT.
  */
 
 import { Router, Request, Response } from "express";
@@ -13,7 +14,7 @@ import {
   setRepoToken,
   insertProjectDocs,
 } from "../db/index.js";
-import type { RequestWithSession } from "./session.js";
+import type { RequestWithUser } from "../shared/index.js";
 import { logger } from "../logger/index.js";
 
 export const onboardingRoutes = Router();
@@ -36,9 +37,9 @@ function toProjectDocItem(
 
 onboardingRoutes.post("/onboarding/idea", async (req: Request, res: Response) => {
   try {
-    const sessionId = (req as RequestWithSession).sessionId;
-    if (!sessionId) {
-      res.status(400).json({ code: "NO_SESSION", message: "Session required." });
+    const userId = (req as RequestWithUser).userId;
+    if (!userId) {
+      res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
       return;
     }
     const body = req.body as NewIdeaRequest;
@@ -53,7 +54,7 @@ onboardingRoutes.post("/onboarding/idea", async (req: Request, res: Response) =>
     }
     const result = await generateDocsFromIdea(body);
     const project = await createProject({
-      sessionId,
+      userId,
       name: body.projectName,
       description: body.description?.trim() || null,
       type: "new_idea",
@@ -80,17 +81,17 @@ onboardingRoutes.post("/onboarding/idea", async (req: Request, res: Response) =>
 
 onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Response) => {
   try {
+    const userId = (req as RequestWithUser).userId;
+    if (!userId) {
+      res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
+      return;
+    }
     const token = getTokenFromRequest(req) ?? req.headers.authorization?.replace("Bearer ", "") ?? "";
     if (!token) {
       res.status(401).json({
         code: "UNAUTHORIZED",
         message: "Please connect your GitHub account first.",
       });
-      return;
-    }
-    const sessionId = (req as RequestWithSession).sessionId;
-    if (!sessionId) {
-      res.status(400).json({ code: "NO_SESSION", message: "Session required." });
       return;
     }
     const { repoId } = req.body as ReviewRepoRequest;
@@ -107,7 +108,7 @@ onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Respo
       token
     );
     const project = await createProject({
-      sessionId,
+      userId,
       name: repoName,
       description: repoDescription,
       type: "existing",
