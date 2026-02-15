@@ -1,0 +1,42 @@
+---
+description: DevDocs AI architecture and module boundaries. Read before editing.
+globs: 
+alwaysApply: true
+---
+
+# DevDocs AI Architecture
+
+## Structure
+
+- `backend/src/modules/` contains domain modules: **ai-engine**, **github**, **doc-generator**
+- `backend/src/shared/` holds all shared types; modules MUST NOT define duplicate types
+- `backend/src/db/` is the data layer (Supabase)
+- `backend/src/routes/` — HTTP handlers only; delegate to modules
+
+## Dependency Flow
+
+```
+routes → doc-generator → (ai-engine | github | db) → shared
+```
+
+- **shared**: No internal dependencies
+- **ai-engine**, **github**, **db**: Depend on shared ONLY
+- **doc-generator**: Orchestrates ai-engine, github, db
+- **routes**: Import only from doc-generator (or high-level modules)
+
+## Conventions
+
+1. **Each module has a README.md** — Read it before editing. It describes scope, deps, and public API.
+2. **Public API via index.ts** — Other modules import `from '../modules/ai-engine'`, never deep paths like `../ai-engine/prompts/xyz`.
+3. **No circular imports** between modules.
+4. **When editing a module**, stay within its scope. Do not add GitHub logic to ai-engine, or AI logic to github.
+
+## Module Responsibilities
+
+| Module | Responsibility |
+|--------|----------------|
+| ai-engine | LLM calls, prompts, content generation (PRD, user stories, API docs) |
+| github | OAuth, file read/write, webhook verification |
+| doc-generator | Orchestrates AI + GitHub, workflows, merge logic |
+| db | Supabase, RepoMeta, DocItem, AITrace |
+| shared | Types, contracts, constants |

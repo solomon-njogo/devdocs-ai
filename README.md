@@ -16,13 +16,24 @@ DevDocs AI automates generation and synchronization of software documentation di
 - Data Layer: Supabase (or equivalent) for persistent state and metadata.
 - Auth: GitHub OAuth to access repositories.
 
-## Project Structure (starter)
-- /docs          - Markdown documentation generated and stored here
-- /src           - Core application logic
-- /ai            - AI prompt templates and orchestration
-- /scripts       - Utility scripts (setup, migrations, CI)
-- .github/workflows - CI workflows
-- README.md      - This document
+## Project Structure
+```
+devdocs-ai/
+├── frontend/           # Next.js dashboard & docs UI
+├── backend/            # Node.js API
+│   └── src/
+│       ├── modules/
+│       │   ├── ai-engine/    # LLM orchestration
+│       │   ├── github/       # OAuth, file ops, webhooks
+│       │   └── doc-generator/ # Orchestrates AI + GitHub
+│       ├── shared/           # Types & contracts
+│       ├── db/                # Supabase layer
+│       └── routes/
+├── docs/               # Generated documentation
+├── scripts/
+├── .cursor/rules/      # Router rules for AI agents
+└── README.md
+```
 
 ## Getting Started
 Prerequisites:
