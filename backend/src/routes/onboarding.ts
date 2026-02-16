@@ -72,6 +72,13 @@ onboardingRoutes.post("/onboarding/idea", async (req: Request, res: Response) =>
     });
   } catch (err) {
     logger.error("Onboarding idea: document generation failed", { error: err });
+    if ((err as { code?: string }).code === "RATE_LIMIT_EXHAUSTED") {
+      res.status(429).json({
+        code: "RATE_LIMIT_EXHAUSTED",
+        message: "Service is busy. Please try again in a moment.",
+      });
+      return;
+    }
     res.status(500).json({
       code: "GENERATION_FAILED",
       message: "We couldn't generate the documents. Please try again.",
@@ -125,6 +132,13 @@ onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Respo
     });
   } catch (err) {
     logger.error("Onboarding review-repo failed", { error: err });
+    if ((err as { code?: string }).code === "RATE_LIMIT_EXHAUSTED") {
+      res.status(429).json({
+        code: "RATE_LIMIT_EXHAUSTED",
+        message: "Service is busy. Please try again in a moment.",
+      });
+      return;
+    }
     res.status(500).json({
       code: "REVIEW_FAILED",
       message: "We couldn't review the repository or push docs. Please try again.",

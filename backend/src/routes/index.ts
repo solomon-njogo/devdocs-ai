@@ -24,9 +24,16 @@ docGeneratorRoutes.post("/docs/generate-prd", async (req, res) => {
     res.json(result);
   } catch (err) {
     logger.error("Generate PRD failed", { error: err });
+    if ((err as { code?: string }).code === "RATE_LIMIT_EXHAUSTED") {
+      res.status(429).json({
+        code: "RATE_LIMIT_EXHAUSTED",
+        message: "Service is busy. Please try again in a moment.",
+      });
+      return;
+    }
     res.status(500).json({
       code: "INTERNAL_ERROR",
-      message: err instanceof Error ? err.message : "Unknown error",
+      message: "Something went wrong. Please try again.",
     });
   }
 });
