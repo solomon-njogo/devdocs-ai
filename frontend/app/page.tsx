@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { UserMenu } from "@/components/UserMenu";
@@ -12,6 +13,7 @@ function projectTypeLabel(type: ProjectType): string {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,11 +83,22 @@ export default function DashboardPage() {
             {projects.map((project) => (
               <li key={project.id}>
                 <Card
-                  title={project.name}
                   elevated
-                  className="h-full flex flex-col hover:border-action-primary/50 transition-colors"
+                  className="h-full flex flex-col hover:border-action-primary/50 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/projects/${project.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/projects/${project.id}`);
+                    }
+                  }}
                 >
-                  <div className="flex flex-col gap-2 flex-1">
+                  <span className="text-lg font-semibold text-text-primary block mb-2">
+                    {project.name}
+                  </span>
+                  <div className="flex flex-col gap-2 flex-1 min-h-0">
                     <span className="inline-flex items-center text-xs font-medium text-text-muted bg-surface-hover px-2 py-0.5 rounded-badge w-fit">
                       {projectTypeLabel(project.type)}
                     </span>
@@ -94,6 +107,7 @@ export default function DashboardPage() {
                         href={`https://github.com/${project.repoId}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="text-sm text-action-primary hover:underline truncate"
                       >
                         {project.repoId}
@@ -103,7 +117,10 @@ export default function DashboardPage() {
                       {new Date(project.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-surface-border flex gap-2">
+                  <div
+                    className="mt-4 pt-3 border-t border-surface-border flex gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {project.repoId ? (
                       <a
                         href={`https://github.com/${project.repoId}`}

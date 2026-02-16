@@ -341,7 +341,9 @@ export default function OnboardingPage() {
             <Button
               variant="primary"
               onClick={() => {
-                router.push("/");
+                const project = status === "new_idea" ? ideaResult?.project : repoResult?.project;
+                if (project?.id) router.push(`/projects/${project.id}`);
+                else router.push("/");
               }}
             >
               Done

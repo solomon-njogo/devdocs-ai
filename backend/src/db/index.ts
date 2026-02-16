@@ -218,3 +218,84 @@ export async function getDocsByProjectId(projectId: string): Promise<ProjectDoc[
   if (error || !data) return [];
   return (data as ProjectDocRow[]).map(rowToProjectDoc);
 }
+
+/** Get a single doc by id; optionally restrict by projectId for ownership checks. */
+export async function getDocById(
+  docId: string,
+  projectId?: string
+): Promise<ProjectDoc | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  let query = supabase.from(PROJECT_DOCS_TABLE).select("*").eq("id", docId);
+  if (projectId) query = query.eq("project_id", projectId);
+  const { data, error } = await query.maybeSingle();
+  if (error || !data) return null;
+  return rowToProjectDoc(data as ProjectDocRow);
+}
+
+/** Update a doc; only updates provided fields. */
+export async function updateProjectDoc(
+  docId: string,
+  projectId: string,
+  payload: { content?: string; path?: string; type?: "prd" | "user_story" | "user_journey" }
+): Promise<ProjectDoc | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const updates: Partial<ProjectDocRow> = {};
+  if (payload.content !== undefined) updates.content = payload.content;
+  if (payload.path !== undefined) updates.path = payload.path;
+  if (payload.type !== undefined) updates.type = payload.type;
+  if (Object.keys(updates).length === 0) return getDocById(docId, projectId);
+  const { data, error } = await supabase
+    .from(PROJECT_DOCS_TABLE)
+    .update(updates)
+    .eq("id", docId)
+    .eq("project_id", projectId)
+    .select()
+    .single();
+  if (error) {
+    logger.error("DB: update project doc failed", { error: error.message, docId, projectId });
+    return null;
+  }
+  return rowToProjectDoc(data as ProjectDocRow);
+}
+
+/** Delete a doc belonging to the project. */
+export async function deleteProjectDoc(docId: string, projectId: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from(PROJECT_DOCS_TABLE)
+    .delete()
+    .eq("id", docId)
+    .eq("project_id", projectId);
+  if (error) {
+    logger.error("DB: delete project doc failed", { error: error.message, docId, projectId });
+    return false;
+  }
+  return true;
+}
+
+/** Insert a single doc and return the created doc. */
+export async function insertProjectDoc(
+  projectId: string,
+  doc: { type: "prd" | "user_story" | "user_journey"; path: string; content: string }
+): Promise<ProjectDoc | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from(PROJECT_DOCS_TABLE)
+    .insert({
+      project_id: projectId,
+      type: doc.type,
+      path: doc.path,
+      content: doc.content,
+    })
+    .select()
+    .single();
+  if (error) {
+    logger.error("DB: insert project doc failed", { error: error.message, projectId });
+    return null;
+  }
+  return rowToProjectDoc(data as ProjectDocRow);
+}
