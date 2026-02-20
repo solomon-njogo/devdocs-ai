@@ -9,6 +9,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "openrouter/free";
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30_000;
+const REQUEST_TIMEOUT_MS = 120_000; // 2 minutes per request
 
 /** Default 2 retries (3 total attempts). Env OPENROUTER_MAX_RETRIES overrides; clamped to 1–3. */
 function getMaxRetries(): number {
@@ -37,12 +38,14 @@ function throwRateLimitExhausted(attempts: number): never {
 
 export interface CompleteOptions {
   maxTokens?: number;
+  /** Optional system-role message (e.g. CO-STAR context). Sent as a separate system message for better model behaviour. */
+  systemPrompt?: string;
 }
 
 /**
  * Call OpenRouter chat completions with the given prompt. Returns the assistant
  * message content as markdown. Throws if OPENROUTER_API_KEY is missing or on
- * API failure; retries on 429.
+ * API failure; retries on 429. Aborts after REQUEST_TIMEOUT_MS (120 s).
  */
 export async function complete(
   prompt: string,
@@ -56,9 +59,15 @@ export async function complete(
   const model = process.env.OPENROUTER_MODEL?.trim() || DEFAULT_MODEL;
   const maxTokens = options?.maxTokens ?? 4096;
 
+  const messages: Array<{ role: "system" | "user"; content: string }> = [];
+  if (options?.systemPrompt) {
+    messages.push({ role: "system", content: options.systemPrompt });
+  }
+  messages.push({ role: "user", content: prompt });
+
   const body = {
     model,
-    messages: [{ role: "user" as const, content: prompt }],
+    messages,
     max_tokens: maxTokens,
   };
 
@@ -67,6 +76,8 @@ export async function complete(
   let lastError: unknown;
 
   for (let attempt = 0; attempt < totalAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
       const res = await fetch(OPENROUTER_URL, {
         method: "POST",
@@ -75,7 +86,9 @@ export async function complete(
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       if (res.status === 429) {
         if (attempt < maxRetries) {
@@ -114,6 +127,7 @@ export async function complete(
       }
       return content;
     } catch (err) {
+      clearTimeout(timeout);
       lastError = err;
       if ((err as { code?: string })?.code === RATE_LIMIT_EXHAUSTED) {
         throw err;
@@ -146,7 +160,7 @@ function sleep(ms: number): Promise<void> {
 function isRetryable(err: unknown): boolean {
   if (err instanceof Error) {
     const m = err.message.toLowerCase();
-    return m.includes("429") || m.includes("rate") || m.includes("timeout") || m.includes("econnreset");
+    return m.includes("429") || m.includes("rate") || m.includes("timeout") || m.includes("econnreset") || m.includes("abort");
   }
   return false;
 }
