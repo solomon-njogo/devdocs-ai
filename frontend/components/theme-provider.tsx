@@ -44,8 +44,11 @@ function applyTheme(resolved: "light" | "dark") {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
-  const [resolved, setResolved] = useState<"light" | "dark">("light");
+  const [theme, setThemeState] = useState<Theme>(() => getStoredTheme());
+  const [resolved, setResolved] = useState<"light" | "dark">(() => {
+    const stored = getStoredTheme();
+    return stored === "system" ? getSystemTheme() : stored;
+  });
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
@@ -55,11 +58,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(resolvedNext);
   }, []);
 
+  // Apply the theme to the DOM on initial mount (side-effect only, no setState)
   useEffect(() => {
     const stored = getStoredTheme();
-    setThemeState(stored);
     const resolvedNext = stored === "system" ? getSystemTheme() : stored;
-    setResolved(resolvedNext);
     applyTheme(resolvedNext);
   }, []);
 

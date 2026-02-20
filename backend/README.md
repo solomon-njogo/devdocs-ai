@@ -21,6 +21,18 @@ API runs at http://localhost:4000
 ## Env
 
 - `PORT` — API port (default: 4000)
+- `FRONTEND_ORIGIN` — Frontend URL for CORS and OAuth redirect (default: http://localhost:3000)
+- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL` — GitHub OAuth (e.g. `http://localhost:4000/api/auth/github/callback`)
+- `WEBHOOK_SECRET` — Secret for verifying GitHub webhook signatures
 - `OPENROUTER_API_KEY` — For ai-engine
-- `GITHUB_TOKEN` — For GitHub API
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY` — For db
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) — For db
+
+## Webhook setup (doc sync)
+
+To keep docs in sync on push, add a GitHub webhook to your repo:
+
+1. Repo → Settings → Webhooks → Add webhook
+2. Payload URL: `https://your-api-host/api/webhooks/github`
+3. Content type: `application/json`
+4. Secret: same as `WEBHOOK_SECRET`
+5. Events: "Just the push event"

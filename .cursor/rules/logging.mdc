@@ -1,0 +1,41 @@
+---
+description: Backend logging — use project logger, levels, no secrets
+globs: backend/**/*.ts
+alwaysApply: false
+---
+
+# Logging
+
+## Use the project logger
+
+- Import the shared logger from the correct path (e.g. `from "../logger/index.js"` or `from "../../logger/index.js"`). Do **not** use `console.log`, `console.error`, or `console.warn` for application logging in backend code.
+
+## Log levels
+
+- **error**: Failures and caught exceptions. Use in every `catch` block before returning a user-friendly response.
+- **warn**: Validation failures, missing input, expected but notable conditions.
+- **info**: Important operations (server start, doc generation completed, etc.).
+- **debug**: Verbose diagnostics; only emitted when `LOG_LEVEL=debug`.
+
+## Catch blocks
+
+- Always log in catch blocks: `logger.error('Short message', { error: err, ...context });` then return a safe, user-friendly message to the client. Never expose raw errors or stack traces in API responses.
+
+## No secrets in logs
+
+- Never log tokens, API keys, passwords, or raw auth headers. Align with api-security rule.
+
+## Example
+
+```typescript
+// BAD — no logging, raw error to user
+catch (err) {
+  res.status(500).json({ message: err.message });
+}
+
+// GOOD — log internally, friendly message to user
+catch (err) {
+  logger.error('Onboarding idea failed', { error: err });
+  res.status(500).json({ code: 'GENERATION_FAILED', message: 'We couldn\'t generate the documents. Please try again.' });
+}
+```

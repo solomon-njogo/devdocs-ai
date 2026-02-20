@@ -9,6 +9,7 @@ export interface GitHubWebhookPayload {
     name: string;
     full_name: string;
     html_url: string;
+    default_branch?: string;
   };
   pusher?: {
     name: string;

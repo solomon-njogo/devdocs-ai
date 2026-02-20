@@ -8,6 +8,8 @@ alwaysApply: false
 
 - **Theming**: The app supports **dark and light mode**. Theme is controlled by the theme provider (class `.dark` on `<html>`). Use design tokens for all colors; tokens switch automatically with the theme. Storage key: `devdocs-theme` (`light` | `dark` | `system`).
 - **Use design tokens**: Prefer Tailwind classes that map to our tokens (e.g. `bg-bg-primary`, `text-text-primary`, `rounded-radius-button`, `text-base`). Do not hardcode hex colors or arbitrary pixel values for spacing/radius in UI.
+- **Rounded corners only**: Never use sharp corners (no `rounded-none`, no 0 radius). Use theme radius classes only (Tailwind v4: `rounded-button`, `rounded-input`, `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-badge`).
+- **Notion-inspired minimalism**: Prefer clean layout, soft neutrals, subtle borders, and rounded corners; avoid visual clutter and hard edges.
 - **shadcn/ui**: Use **shadcn** for complex patterns only: dropdowns (DropdownMenu), modals (Dialog), confirmations (AlertDialog), select inputs (Select), tabs (Tabs), tooltips (Tooltip), sheets (Sheet), popovers (Popover), command palette (Command). Add components only when needed via `npx shadcn@canary add <component>`. Do not overuse (e.g. do not use shadcn Button for every button). Do not underuse (use shadcn for dropdowns, modals, and other complex primitives instead of custom implementations).
 - **Design-system components**: Use existing **Button, Input, Badge, Card, Alert** from `@/components/ui` for simple actions, text fields, status labels, containers, and inline alerts. Do not replace these with shadcn equivalents.
 - **Reference**: See [frontend/docs/DESIGN_SYSTEM.md](frontend/docs/DESIGN_SYSTEM.md) for the full token reference, theming, and component usage.
