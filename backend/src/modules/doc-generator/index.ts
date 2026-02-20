@@ -35,11 +35,11 @@ export async function generateDocsFromIdea(
   const input = ideaToInput(idea);
   const context = { source: "idea" as const, projectName: idea.projectName };
 
-  const [prd, userStories, userJourneys] = await Promise.all([
-    generatePRD(input, context),
-    generateUserStories(input, context),
-    generateUserJourneys(input, context),
-  ]);
+  // Sequential: PRD first, then feed its output into stories & journeys for coherence
+  const prd = await generatePRD(input, context);
+  const contextWithPrd = { ...context, prdContent: prd };
+  const userStories = await generateUserStories(input, contextWithPrd);
+  const userJourneys = await generateUserJourneys(input, contextWithPrd);
 
   const docs: GeneratedDocItem[] = [
     { type: "prd", path: "/docs/prd.md", content: prd },
@@ -73,11 +73,11 @@ export async function reviewAndPushDocs(repoId: string, token: string): Promise<
   const codebaseSummary = await buildCodebaseSummary(repoId, token);
   const context = { source: "repo" as const, repoId, codebaseSummary, projectName: repoId };
 
-  const [prd, userStories, userJourneys] = await Promise.all([
-    generatePRD(codebaseSummary, context),
-    generateUserStories(codebaseSummary, context),
-    generateUserJourneys(codebaseSummary, context),
-  ]);
+  // Sequential: PRD first, then feed its output into stories & journeys for coherence
+  const prd = await generatePRD(codebaseSummary, context);
+  const contextWithPrd = { ...context, prdContent: prd };
+  const userStories = await generateUserStories(codebaseSummary, contextWithPrd);
+  const userJourneys = await generateUserJourneys(codebaseSummary, contextWithPrd);
 
   const basePath = "docs";
   const paths = [

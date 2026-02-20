@@ -1,13 +1,77 @@
 /**
- * PRD prompt template. Placeholders: {{input}}, {{source}}, {{projectName}}, {{codebaseSummary}}
+ * PRD prompt template — CO-STAR framework with Success Metrics,
+ * Technical Constraints, Edge-Case Mapping, and Phase-based Planning.
  */
 
-export function buildPRDPrompt(input: string, context?: Record<string, unknown>): string {
-  const source = (context?.source as string) ?? "idea";
-  const projectName = (context?.projectName as string) ?? "Project";
-  const codebaseSummary = (context?.codebaseSummary as string) ?? "";
-  if (source === "repo" && codebaseSummary) {
-    return `Generate a Product Requirements Document for the following codebase.\n\nProject: ${projectName}\n\nCodebase summary:\n${codebaseSummary}\n\nAdditional context:\n${input}\n\nOutput as markdown.`;
-  }
-  return `Generate a Product Requirements Document for a new idea.\n\nProject: ${projectName}\n\nIdea and requirements:\n${input}\n\nOutput as markdown.`;
+import { buildSystemContext, type PromptContext, type PromptParts } from "./system-context.js";
+
+export function buildPRDPrompt(input: string, context?: Record<string, unknown>): PromptParts {
+  const system = buildSystemContext(context as PromptContext | undefined);
+
+  const user = [
+    "## Objective",
+    "",
+    "Generate a comprehensive, production-ready **Product Requirements Document (PRD)**.",
+    "",
+    "Use the following input as the basis for the document:",
+    "",
+    "---",
+    input,
+    "---",
+    "",
+    "## Required Output Sections",
+    "",
+    "Structure your PRD with exactly these sections:",
+    "",
+    "### 1. Executive Summary",
+    "A brief overview (2-3 paragraphs) of what is being built and why.",
+    "",
+    "### 2. Problem Statement",
+    "- What specific problem does this solve?",
+    "- Who experiences this problem?",
+    "- What is the current workaround or status quo?",
+    "",
+    "### 3. Goals & Success Metrics (KPIs)",
+    "Define SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound).",
+    "Present KPIs in a table:",
+    "",
+    "| Metric | Target | Measurement Method | Timeline |",
+    "|--------|--------|--------------------|----------|",
+    "",
+    "### 4. User Personas",
+    "For each persona include: Name, Role, Demographics, Goals, Pain Points, Tech Proficiency.",
+    "",
+    "### 5. Functional Requirements (Phased)",
+    "Break features into sequential implementation phases:",
+    "- **Phase 1 (MVP):** Core features required for launch",
+    "- **Phase 2 (Enhancement):** Features that improve UX and engagement",
+    "- **Phase 3 (Scale):** Advanced features, optimizations, integrations",
+    "",
+    "For each feature: ID, Description, Priority (Must/Should/Could/Won't), Phase.",
+    "",
+    "### 6. Non-Functional Requirements",
+    "Cover: Performance benchmarks, Security requirements, Accessibility (WCAG), Scalability targets, Compliance needs.",
+    "",
+    "### 7. Technical Constraints",
+    "- Stack-specific limitations and dependencies",
+    "- Third-party service constraints",
+    "- Browser/platform compatibility",
+    "- Data storage and migration considerations",
+    "",
+    "### 8. Edge Cases & Error Handling",
+    "Map potential failure scenarios in a table:",
+    "",
+    "| Scenario | Expected Behaviour | Fallback/Recovery |",
+    "|----------|-------------------|-------------------|",
+    "",
+    "### 9. Dependencies & Risks",
+    "",
+    "| Risk | Probability | Impact | Mitigation |",
+    "|------|-------------|--------|------------|",
+    "",
+    "### 10. Timeline & Milestones",
+    "Provide a phase-based delivery plan tied to the Functional Requirements phases above.",
+  ].join("\n");
+
+  return { system, user };
 }

@@ -14,36 +14,36 @@ export async function generatePRD(
   input: string,
   context?: Record<string, unknown>
 ): Promise<string> {
-  const prompt = buildPRDPrompt(input, context);
+  const { system, user } = buildPRDPrompt(input, context);
   logger.debug("PRD generation", {
     promptId: "prd",
     model: process.env.OPENROUTER_MODEL ?? "default",
   });
-  return complete(prompt);
+  return complete(user, { systemPrompt: system });
 }
 
 export async function generateUserStories(
   input: string,
   context?: Record<string, unknown>
 ): Promise<string> {
-  const prompt = buildUserStoriesPrompt(input, context);
+  const { system, user } = buildUserStoriesPrompt(input, context);
   logger.debug("User stories generation", {
     promptId: "user-stories",
     model: process.env.OPENROUTER_MODEL ?? "default",
   });
-  return complete(prompt);
+  return complete(user, { systemPrompt: system });
 }
 
 export async function generateUserJourneys(
   input: string,
   context?: Record<string, unknown>
 ): Promise<string> {
-  const prompt = buildUserJourneysPrompt(input, context);
+  const { system, user } = buildUserJourneysPrompt(input, context);
   logger.debug("User journeys generation", {
     promptId: "user-journeys",
     model: process.env.OPENROUTER_MODEL ?? "default",
   });
-  return complete(prompt);
+  return complete(user, { systemPrompt: system });
 }
 
 export async function generateApiDocs(
