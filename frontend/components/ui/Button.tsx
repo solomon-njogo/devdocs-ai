@@ -15,23 +15,24 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-action-primary text-bg-primary hover:bg-action-primary-hover focus-visible:ring-ring border-0",
+    "bg-gradient-to-r from-action-primary to-action-primary-hover text-text-on-primary hover:shadow-[0_0_24px_var(--color-action-primary-glow)] hover:scale-[1.02] active:scale-[0.98] border-0",
   secondary:
-    "bg-bg-secondary text-text-primary border border-surface-border hover:bg-surface-hover focus-visible:ring-ring",
+    "bg-surface-glass backdrop-blur-sm text-text-primary border border-surface-border hover:border-action-primary/40 hover:bg-surface-hover hover:shadow-[0_0_16px_var(--color-glow)] active:scale-[0.98]",
   ghost:
-    "bg-transparent text-text-primary hover:bg-surface-hover focus-visible:ring-ring border border-transparent",
+    "bg-transparent text-text-secondary hover:text-action-primary hover:bg-surface-hover/50 border border-transparent active:scale-[0.98]",
   danger:
-    "bg-semantic-error-text/20 text-semantic-error-text hover:bg-semantic-error-bg focus-visible:ring-ring border border-semantic-error-text/40",
+    "bg-semantic-error-bg text-semantic-error-text border border-semantic-error-text/30 hover:border-semantic-error-text/60 hover:shadow-[0_0_16px_rgba(239,68,68,0.2)] active:scale-[0.98]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-sm rounded-button gap-1.5",
-  md: "px-4 py-2 text-base rounded-button gap-2",
-  lg: "px-5 py-2.5 text-md rounded-button gap-2.5",
+  sm: "px-3.5 py-1.5 text-sm rounded-button gap-1.5",
+  md: "px-5 py-2.5 text-base rounded-button gap-2",
+  lg: "px-6 py-3 text-md rounded-button gap-2.5 font-semibold",
 };
 
 /**
- * Primary button component. Use design system tokens only.
+ * Primary button component with Mintlify-inspired styling.
+ * Gradient primary, glass secondary, smooth micro-animations.
  */
 export function Button({
   variant = "primary",
@@ -44,7 +45,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center font-medium transition-colors duration-[var(--duration-normal)] ease-[var(--ease-default)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none";
   const variantClass = variantClasses[variant];
   const sizeClass = sizeClasses[size];
 

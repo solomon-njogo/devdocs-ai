@@ -5,11 +5,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Base styles ── */
 body {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -60,7 +61,367 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ── Keyframe animations ── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--color-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 40px var(--color-glow);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Utility classes ── */
+.animate-fade-in {
+  animation: fade-in 0.5s var(--ease-default) both;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.4s var(--ease-default) both;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+/* Glass effect */
+.glass {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+}
+
+/* Glow border on hover */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-default);
+}
+
+.glow-border:hover::after {
+  opacity: 0.5;
+}
+
+/* Dot pattern background */
+.dot-pattern {
+  background-image: radial-gradient(circle, var(--color-surface-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Landing page animations ── */
+@keyframes typing-cursor {
+
+  0%,
+  100% {
+    border-right-color: currentColor;
+  }
+
+  50% {
+    border-right-color: transparent;
+  }
+}
+
+.typing-animation {
+  border-right: 2px solid currentColor;
+  animation: typing-cursor 1s steps(1) infinite;
+  padding-right: 2px;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-faded);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Syntax highlighting (hljs tokens from rehype-highlight) ── */
+.hljs {
+  color: var(--color-text-primary);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-type {
+  color: #c678dd;
+}
+
+.hljs-string,
+.hljs-addition,
+.hljs-attr {
+  color: #98c379;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-symbol {
+  color: #d19a66;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #e5c07b;
+}
+
+.hljs-function .hljs-title,
+.hljs-title.function_ {
+  color: #61afef;
+}
+
+.hljs-variable,
+.hljs-template-variable {
+  color: #e06c75;
+}
+
+.hljs-deletion {
+  color: #e06c75;
+}
+
+.hljs-meta,
+.hljs-meta .hljs-string {
+  color: #56b6c2;
+}
+
+.hljs-selector-class,
+.hljs-selector-id {
+  color: #e5c07b;
+}
+
+.hljs-regexp {
+  color: #98c379;
+}
+
+.hljs-name,
+.hljs-tag {
+  color: #e06c75;
+}
+
+.hljs-attribute {
+  color: #d19a66;
+}
+
+/* Light mode overrides */
+:root .hljs {
+  color: var(--color-text-primary);
+}
+
+:root .hljs-comment,
+:root .hljs-quote {
+  color: #6a737d;
+}
+
+:root .hljs-keyword,
+:root .hljs-selector-tag,
+:root .hljs-type {
+  color: #d73a49;
+}
+
+:root .hljs-string,
+:root .hljs-addition,
+:root .hljs-attr {
+  color: #22863a;
+}
+
+:root .hljs-number,
+:root .hljs-literal,
+:root .hljs-symbol {
+  color: #005cc5;
+}
+
+:root .hljs-built_in,
+:root .hljs-builtin-name {
+  color: #e36209;
+}
+
+:root .hljs-function .hljs-title,
+:root .hljs-title.function_ {
+  color: #6f42c1;
+}
+
+:root .hljs-variable,
+:root .hljs-template-variable {
+  color: #e36209;
+}
+
+:root .hljs-deletion {
+  color: #cb2431;
+}
+
+:root .hljs-meta,
+:root .hljs-meta .hljs-string {
+  color: #032f62;
+}
+
+:root .hljs-name,
+:root .hljs-tag {
+  color: #22863a;
+}
+
+.dark .hljs {
+  color: var(--color-text-primary);
+}
+
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-type {
+  color: #c678dd;
+}
+
+.dark .hljs-string,
+.dark .hljs-addition,
+.dark .hljs-attr {
+  color: #98c379;
+}
+
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-symbol {
+  color: #d19a66;
+}
+
+.dark .hljs-built_in,
+.dark .hljs-builtin-name {
+  color: #e5c07b;
+}
+
+.dark .hljs-function .hljs-title,
+.dark .hljs-title.function_ {
+  color: #61afef;
+}
+
+.dark .hljs-variable,
+.dark .hljs-template-variable {
+  color: #e06c75;
+}
+
+.dark .hljs-deletion {
+  color: #e06c75;
+}
+
+.dark .hljs-meta,
+.dark .hljs-meta .hljs-string {
+  color: #56b6c2;
+}
+
+.dark .hljs-name,
+.dark .hljs-tag {
+  color: #e06c75;
 }

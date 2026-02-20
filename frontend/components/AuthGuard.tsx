@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 
-const PROTECTED_PATHS = ["/", "/onboarding"];
+const PROTECTED_PATHS = ["/dashboard", "/onboarding"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

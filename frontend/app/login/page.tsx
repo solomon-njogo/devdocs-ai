@@ -11,7 +11,7 @@ import { createSupabaseClient } from "@/lib/supabase";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/";
+  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,10 +90,8 @@ function LoginContent() {
       setError(null);
       setMode("signin");
       setPassword("");
-      // If Supabase requires email confirmation, show message; else they're in
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        // Brief delay so the session is fully persisted before navigation (avoids "invalid token" on next page)
         await new Promise((r) => setTimeout(r, 150));
         router.replace(redirectTo);
       } else {
@@ -109,115 +107,143 @@ function LoginContent() {
   if (checkingSession) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <p className="text-text-muted">Loading…</p>
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-action-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-text-muted">Loading…</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center py-8 px-4 sm:px-6">
-      <div className="w-full max-w-md flex flex-col gap-8">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col items-center justify-center py-8 px-4 sm:px-6 relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-action-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-action-primary/3 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="w-full max-w-md flex flex-col gap-8 relative z-10 animate-fade-in">
+        {/* Brand header */}
         <header className="text-center">
-          <Link href="/" className="text-xl font-semibold text-action-primary hover:underline">
-            DevDocs AI
+          <Link href="/" className="inline-flex items-center gap-2 group">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-action-primary to-action-primary-hover flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </div>
+            <span className="text-xl font-bold gradient-text">DevDocs AI</span>
           </Link>
+          <p className="text-text-muted text-sm mt-3">
+            AI-powered development documentation
+          </p>
         </header>
 
-        <Card title={mode === "signin" ? "Sign in" : "Create account"} elevated>
-          {error && (
-            <div className="rounded-lg border border-semantic-error-text/50 bg-semantic-error-bg px-4 py-3 text-sm text-semantic-error-text mb-4">
-              {error}
+        {/* Login card */}
+        <Card elevated>
+          <div className="space-y-6">
+            {/* Tab-like switcher */}
+            <div className="flex rounded-lg bg-bg-tertiary p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => { setMode("signin"); setError(null); }}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-[var(--duration-normal)] cursor-pointer ${mode === "signin"
+                  ? "bg-bg-secondary text-text-primary shadow-sm"
+                  : "text-text-muted hover:text-text-secondary"
+                  }`}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode("signup"); setError(null); }}
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-[var(--duration-normal)] cursor-pointer ${mode === "signup"
+                  ? "bg-bg-secondary text-text-primary shadow-sm"
+                  : "text-text-muted hover:text-text-secondary"
+                  }`}
+              >
+                Create account
+              </button>
             </div>
-          )}
-          {mode === "signin" ? (
-            <form onSubmit={handleSignIn} className="flex flex-col gap-4">
-              <Input
-                label="Email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-              <Input
-                label="Password"
-                type="password"
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-              <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-                {loading ? "Signing in…" : "Sign in"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleSignUp} className="flex flex-col gap-4">
-              <Input
-                label="Email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-              <Input
-                label="Password"
-                type="password"
-                required
-                autoComplete="new-password"
-                placeholder="At least 6 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-              <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-                {loading ? "Creating account…" : "Create account"}
-              </Button>
-            </form>
-          )}
-          <p className="text-sm text-text-muted mt-4 text-center">
-            {mode === "signin" ? (
-              <>
-                Don&apos;t have an account?{" "}
-                <button
-                  type="button"
-                  className="text-action-primary hover:underline"
-                  onClick={() => {
-                    setMode("signup");
-                    setError(null);
-                  }}
-                >
-                  Sign up
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  className="text-action-primary hover:underline"
-                  onClick={() => {
-                    setMode("signin");
-                    setError(null);
-                  }}
-                >
-                  Sign in
-                </button>
-              </>
+
+            {error && (
+              <div className="rounded-lg border border-semantic-error-text/30 bg-semantic-error-bg px-4 py-3 text-sm text-semantic-error-text animate-fade-in">
+                {error}
+              </div>
             )}
-          </p>
+
+            {mode === "signin" ? (
+              <form onSubmit={handleSignIn} className="flex flex-col gap-5">
+                <Input
+                  label="Email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+                <Input
+                  label="Password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-text-on-primary/30 border-t-text-on-primary rounded-full animate-spin" />
+                      Signing in…
+                    </span>
+                  ) : "Sign in"}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignUp} className="flex flex-col gap-5">
+                <Input
+                  label="Email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+                <Input
+                  label="Password"
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  placeholder="At least 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-text-on-primary/30 border-t-text-on-primary rounded-full animate-spin" />
+                      Creating account…
+                    </span>
+                  ) : "Create account"}
+                </Button>
+              </form>
+            )}
+          </div>
         </Card>
 
         <p className="text-center text-sm text-text-muted">
-          <Link href="/" className="text-action-primary hover:underline">
-            Back to home
+          <Link href="/" className="text-action-primary hover:text-action-primary-hover transition-colors">
+            ← Back to home
           </Link>
         </p>
       </div>
@@ -230,7 +256,10 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-          <p className="text-text-muted">Loading…</p>
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-action-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-text-muted">Loading…</p>
+          </div>
         </div>
       }
     >

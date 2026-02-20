@@ -9,10 +9,10 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const baseInput =
-  "w-full bg-bg-primary text-text-primary border border-surface-border rounded-input px-3 py-1.5 text-base placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-bg-primary transition-[box-shadow] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed";
+  "w-full bg-bg-primary text-text-primary border border-surface-border rounded-input px-4 py-2.5 text-base placeholder:text-text-faded focus:outline-none focus:ring-2 focus:ring-action-primary/30 focus:border-action-primary transition-all duration-[var(--duration-normal)] disabled:opacity-40 disabled:cursor-not-allowed";
 
 /**
- * Text input using design system tokens. Supports label, error, hint, and addons.
+ * Text input with Mintlify-inspired styling. Emerald glow on focus.
  */
 export function Input({
   label,
@@ -30,7 +30,7 @@ export function Input({
   const inputEl = (
     <input
       id={id}
-      className={`${baseInput} ${error ? "border-semantic-error-text" : ""} ${className}`.trim()}
+      className={`${baseInput} ${error ? "border-semantic-error-text focus:ring-semantic-error-text/30" : ""} ${className}`.trim()}
       aria-invalid={!!error}
       aria-describedby={
         [error && `${id}-error`, hint && `${id}-hint`].filter(Boolean).join(" ") || undefined
@@ -42,22 +42,22 @@ export function Input({
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-text-primary mb-1.5">
+        <label htmlFor={id} className="block text-sm font-medium text-text-secondary mb-2">
           {label}
         </label>
       )}
       {hasAddons ? (
         <div
-          className={`flex rounded-input border overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-bg-primary focus-within:border-transparent ${error ? "border-semantic-error-text" : "border-surface-border"}`}
+          className={`flex rounded-input border overflow-hidden focus-within:ring-2 focus-within:ring-action-primary/30 focus-within:border-action-primary transition-all duration-[var(--duration-normal)] ${error ? "border-semantic-error-text" : "border-surface-border"}`}
         >
           {leftAddon && (
-            <span className="flex items-center bg-bg-secondary text-text-muted px-3 text-sm border-r border-surface-border">
+            <span className="flex items-center bg-bg-tertiary text-text-muted px-4 text-sm border-r border-surface-border">
               {leftAddon}
             </span>
           )}
           <input
             id={id}
-            className={`${baseInput} border-0 rounded-sm focus:ring-0 focus:ring-offset-0 ${error ? "border-semantic-error-text" : ""} ${className}`.trim()}
+            className={`${baseInput} border-0 rounded-none focus:ring-0 ${error ? "border-semantic-error-text" : ""} ${className}`.trim()}
             aria-invalid={!!error}
             aria-describedby={
               [error && `${id}-error`, hint && `${id}-hint`].filter(Boolean).join(" ") || undefined
@@ -65,7 +65,7 @@ export function Input({
             {...props}
           />
           {rightAddon && (
-            <span className="flex items-center bg-bg-secondary text-text-muted px-3 text-sm border-l border-surface-border">
+            <span className="flex items-center bg-bg-tertiary text-text-muted px-4 text-sm border-l border-surface-border">
               {rightAddon}
             </span>
           )}
@@ -74,12 +74,12 @@ export function Input({
         inputEl
       )}
       {error && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-semantic-error-text" role="alert">
+        <p id={`${id}-error`} className="mt-2 text-sm text-semantic-error-text" role="alert">
           {error}
         </p>
       )}
       {hint && !error && (
-        <p id={`${id}-hint`} className="mt-1.5 text-sm text-text-muted">
+        <p id={`${id}-hint`} className="mt-2 text-sm text-text-muted">
           {hint}
         </p>
       )}
