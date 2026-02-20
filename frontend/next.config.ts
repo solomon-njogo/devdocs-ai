@@ -27,7 +27,7 @@ try {
       }
     }
   }
-} catch (_) {}
+} catch { /* env file not found or unreadable */ }
 
 loadEnvConfig(projectRoot);
 loadEnvConfig(cwd);

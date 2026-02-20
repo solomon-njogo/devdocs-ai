@@ -46,7 +46,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => { loadProject(); }, [loadProject]);
   const selectedDoc = docs.find(d => d.id === selectedDocId);
-  useEffect(() => { if (selectedDoc) { setEditContent(selectedDoc.content); setEditPath(selectedDoc.path); setEditType(selectedDoc.type); setEditing(false); } }, [selectedDoc?.id]);
+  useEffect(() => { const doc = docs.find(d => d.id === selectedDocId); if (doc) { setEditContent(doc.content); setEditPath(doc.path); setEditType(doc.type); setEditing(false); } }, [selectedDocId, docs]);
 
   const handleSaveEdit = async () => {
     if (!id || !selectedDoc) return; setSaving(true); setError(null);

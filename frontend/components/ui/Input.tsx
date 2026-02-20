@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { useId } from "react";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -24,7 +25,8 @@ export function Input({
   className = "",
   ...props
 }: InputProps) {
-  const id = idProp ?? `input-${Math.random().toString(36).slice(2, 9)}`;
+  const generatedId = useId();
+  const id = idProp ?? generatedId;
   const hasAddons = leftAddon ?? rightAddon;
 
   const inputEl = (

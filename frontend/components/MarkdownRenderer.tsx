@@ -150,6 +150,7 @@ const components: Components = {
         />
     ),
     img: ({ alt, ...props }) => (
+        /* eslint-disable-next-line @next/next/no-img-element */
         <img
             className="max-w-full rounded-lg border border-surface-border my-3 shadow-sm"
             alt={alt ?? ""}

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 
 /* ──────────────── Animated counter hook ──────────────── */
@@ -25,19 +25,25 @@ function useCountUp(target: number, duration = 2000, start = false) {
 
 /* ──────────────── Intersection Observer hook ──────────────── */
 function useInView(threshold = 0.15) {
-    const ref = useRef<HTMLDivElement>(null);
+    const observerRef = useRef<IntersectionObserver | null>(null);
     const [inView, setInView] = useState(false);
-    useEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-        const obs = new IntersectionObserver(
-            ([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } },
-            { threshold }
-        );
-        obs.observe(el);
-        return () => obs.disconnect();
+
+    const setRef = useCallback((node: HTMLDivElement | null) => {
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+            observerRef.current = null;
+        }
+        if (node) {
+            const obs = new IntersectionObserver(
+                ([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } },
+                { threshold }
+            );
+            obs.observe(node);
+            observerRef.current = obs;
+        }
     }, [threshold]);
-    return { ref, inView };
+
+    return { setRef, inView };
 }
 
 /* ──────────────── Feature card data ──────────────── */
@@ -115,12 +121,14 @@ const steps = [
 /* ════════════════ LANDING PAGE ════════════════ */
 export default function LandingPage() {
     const [mounted, setMounted] = useState(false);
-    const statsRef = useInView(0.3);
-    const projects = useCountUp(1200, 2000, statsRef.inView);
-    const docs = useCountUp(15000, 2500, statsRef.inView);
-    const devs = useCountUp(3200, 2000, statsRef.inView);
+    const { setRef: statsRefCallback, inView: statsInView } = useInView(0.3);
+    const projects = useCountUp(1200, 2000, statsInView);
+    const docs = useCountUp(15000, 2500, statsInView);
+    const devs = useCountUp(3200, 2000, statsInView);
 
-    useEffect(() => setMounted(true), []);
+    useEffect(() => {
+        Promise.resolve().then(() => setMounted(true));
+    }, []);
 
     return (
         <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden">
@@ -263,7 +271,7 @@ export default function LandingPage() {
             </section>
 
             {/* ═══════ TRUSTED BY / STATS ═══════ */}
-            <section id="stats" ref={statsRef.ref} className="relative z-10 py-16 border-t border-b border-surface-border bg-bg-secondary/50">
+            <section id="stats" ref={statsRefCallback} className="relative z-10 py-16 border-t border-b border-surface-border bg-bg-secondary/50">
                 <div className="max-w-5xl mx-auto px-6 lg:px-8">
                     <p className="text-center text-sm text-text-faded uppercase tracking-widest mb-10 font-medium">Trusted by developers worldwide</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
@@ -346,8 +354,8 @@ export default function LandingPage() {
                             <div className="mt-6 rounded-xl border border-surface-border bg-bg-tertiary/50 p-4 font-mono text-sm space-y-1">
                                 <p className="text-text-muted">{`// AI-generated from your codebase`}</p>
                                 <p><span className="text-[#c678dd]">export</span> <span className="text-[#61afef]">function</span> <span className="text-[#e5c07b]">createUser</span>(data: UserInput) {`{`}</p>
-                                <p className="pl-4"><span className="text-[#6a737d]">// Validates input, hashes password,</span></p>
-                                <p className="pl-4"><span className="text-[#6a737d]">// and persists to database</span></p>
+                                <p className="pl-4"><span className="text-[#6a737d]">{"// Validates input, hashes password,"}</span></p>
+                                <p className="pl-4"><span className="text-[#6a737d]">{"// and persists to database"}</span></p>
                                 <p className="pl-4"><span className="text-[#c678dd]">return</span> db.users.<span className="text-[#61afef]">create</span>({`{ ...data }`});</p>
                                 <p>{`}`}</p>
                             </div>
@@ -497,10 +505,10 @@ export default function LandingPage() {
 
 /* ──────────────── Feature Card Component ──────────────── */
 function FeatureCard({ feat, index }: { feat: typeof features[number]; index: number }) {
-    const { ref, inView } = useInView(0.15);
+    const { setRef, inView } = useInView(0.15);
     return (
         <div
-            ref={ref}
+            ref={setRef}
             className={`group relative rounded-2xl border border-surface-border bg-bg-secondary p-7 transition-all duration-500 hover:border-action-primary/30 hover:shadow-[0_0_30px_var(--color-glow)] hover:-translate-y-1 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                 }`}
             style={{ transitionDelay: `${index * 80}ms` }}
@@ -516,10 +524,10 @@ function FeatureCard({ feat, index }: { feat: typeof features[number]; index: nu
 
 /* ──────────────── Step Card Component ──────────────── */
 function StepCard({ step, index }: { step: typeof steps[number]; index: number }) {
-    const { ref, inView } = useInView(0.15);
+    const { setRef, inView } = useInView(0.15);
     return (
         <div
-            ref={ref}
+            ref={setRef}
             className={`relative text-center md:text-left p-6 rounded-2xl border border-surface-border bg-bg-secondary transition-all duration-500 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                 }`}
             style={{ transitionDelay: `${index * 120}ms` }}
@@ -549,10 +557,10 @@ function BentoCard({
     className?: string;
     accent?: boolean;
 }) {
-    const { ref, inView } = useInView(0.1);
+    const { setRef, inView } = useInView(0.1);
     return (
         <div
-            ref={ref}
+            ref={setRef}
             className={`group rounded-2xl border border-surface-border bg-bg-secondary p-7 transition-all duration-500 hover:border-action-primary/30 hover:shadow-[0_0_30px_var(--color-glow)] ${accent ? "bg-gradient-to-br from-bg-secondary to-action-primary/[0.04]" : ""
                 } ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"} ${className}`}
         >
