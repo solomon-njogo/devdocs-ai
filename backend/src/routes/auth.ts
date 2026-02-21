@@ -76,6 +76,23 @@ authRoutes.get("/auth/github/callback", async (req: Request, res: Response) => {
   }
 });
 
+/** Returns the connection status of various integrations. */
+authRoutes.get("/auth/status", requireAuth, (req: Request, res: Response) => {
+  const userId = (req as RequestWithUser).userId;
+  if (!userId) {
+    res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
+    return;
+  }
+
+  const githubConnected = !!getToken(userId);
+
+  res.json({
+    github: { connected: githubConnected },
+    gitlab: { connected: false },
+    linear: { connected: false },
+  });
+});
+
 /**
  * Returns the GitHub repo token for the current user (from token store keyed by userId).
  * Used by onboarding and other route handlers that need the repo token.

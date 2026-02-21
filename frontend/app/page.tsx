@@ -131,11 +131,12 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden">
+        <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden selection:bg-action-primary selection:text-white">
             {/* ─── Ambient background effects ─── */}
             <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
-                <div className="absolute -top-[40%] -left-[20%] w-[80vw] h-[80vw] rounded-full bg-action-primary/[0.04] blur-[120px]" />
-                <div className="absolute -bottom-[30%] -right-[15%] w-[60vw] h-[60vw] rounded-full bg-action-primary/[0.03] blur-[100px]" />
+                <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-action-primary/10 to-transparent pointer-events-none" />
+                <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-sky-200/30 dark:bg-sky-900/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-20 -left-20 w-[400px] h-[400px] bg-action-primary/20 dark:bg-action-primary/10 rounded-full blur-3xl pointer-events-none" />
             </div>
 
             {/* ═══════ NAV ═══════ */}
@@ -191,78 +192,105 @@ export default function LandingPage() {
 
                     {/* Headline */}
                     <h1
-                        className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                        className={`text-5xl md:text-7xl font-bold tracking-tight text-text-primary mb-6 transition-all duration-700 delay-100 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                             }`}
                     >
                         <span className="text-text-primary">The Intelligent</span>
                         <br />
-                        <span className="gradient-text">Documentation Engine</span>
+                        <span className="gradient-text bg-gradient-to-r from-action-primary to-emerald-400 bg-clip-text text-transparent">Knowledge Platform</span>
                     </h1>
 
                     {/* Sub-headline */}
                     <p
-                        className={`max-w-2xl mx-auto text-lg md:text-xl text-text-muted leading-relaxed mb-10 transition-all duration-700 delay-200 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                        className={`max-w-2xl mx-auto text-xl text-text-muted leading-relaxed mb-10 transition-all duration-700 delay-200 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                             }`}
                     >
-                        Transform your ideas and repositories into beautiful, comprehensive documentation.
-                        Powered by AI, built for developers.
+                        Helping engineering teams create and maintain world-class documentation built for both humans and AI agents.
                     </p>
 
                     {/* CTA Buttons */}
                     <div
-                        className={`flex flex-wrap items-center justify-center gap-4 mb-16 transition-all duration-700 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                        className={`flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto w-full mb-16 transition-all duration-700 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                             }`}
                     >
-                        <Link href="/login">
-                            <Button variant="primary" size="lg">
-                                Start Building for Free
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                    <polyline points="12 5 19 12 12 19" />
-                                </svg>
-                            </Button>
-                        </Link>
-                        <a href="#how-it-works">
-                            <Button variant="secondary" size="lg">
-                                See How It Works
-                            </Button>
-                        </a>
+                        <div className="relative w-full">
+                            <input
+                                className="w-full pl-5 pr-32 py-4 rounded-full border border-surface-border bg-bg-secondary text-text-primary focus:ring-2 focus:ring-action-primary focus:border-transparent shadow-sm outline-none"
+                                placeholder="Enter your work email"
+                                type="email"
+                            />
+                            <button className="absolute right-1.5 top-1.5 bottom-1.5 bg-action-primary hover:bg-action-primary-hover text-white px-6 rounded-full text-sm font-medium transition-colors">
+                                Start now
+                            </button>
+                        </div>
                     </div>
 
                     {/* Hero visual — Mock terminal/code window */}
                     <div
-                        className={`relative max-w-3xl mx-auto transition-all duration-1000 delay-500 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-10 scale-95"
+                        className={`mt-16 relative mx-auto max-w-5xl transition-all duration-1000 delay-500 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-10 scale-95"
                             }`}
                     >
-                        {/* Glow behind card */}
-                        <div className="absolute inset-0 -m-4 rounded-3xl bg-action-primary/[0.06] blur-2xl animate-glow-pulse" />
-                        <div className="relative rounded-2xl border border-surface-border bg-bg-secondary overflow-hidden shadow-2xl">
-                            {/* Window chrome */}
-                            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-surface-border bg-bg-tertiary/50">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-action-primary to-sky-400 rounded-2xl blur opacity-30 dark:opacity-40"></div>
+                        <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-surface-border bg-bg-tertiary">
+                            <div className="h-10 bg-bg-tertiary border-b border-surface-border flex items-center px-4 gap-2">
                                 <div className="flex gap-1.5">
-                                    <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                                    <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                                    <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+                                    <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                    <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                                    <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
                                 </div>
-                                <div className="flex-1 text-center">
-                                    <span className="text-xs text-text-faded font-mono">devdocs-ai — generate docs</span>
-                                </div>
+                                <div className="mx-auto text-xs text-text-faded font-mono">docs.devdocs.ai</div>
                             </div>
-                            {/* Code preview */}
-                            <div className="p-6 md:p-8 font-mono text-sm leading-relaxed text-left">
-                                <div className="flex items-center gap-2 text-text-muted mb-4">
-                                    <span className="text-action-primary">$</span>
-                                    <span className="typing-animation">devdocs generate --repo my-startup/api</span>
+                            <div className="flex h-[500px] text-left">
+                                <div className="w-64 border-r border-surface-border bg-bg-secondary p-4 hidden md:block">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div className="text-xs font-semibold text-text-faded uppercase tracking-wider mb-2">Platform</div>
+                                            <ul className="space-y-2 text-sm text-text-muted">
+                                                <li className="flex items-center gap-2 text-action-primary bg-action-primary/10 p-2 rounded"><span className="w-4 h-4">⚡</span> Quickstart</li>
+                                                <li className="flex items-center gap-2 p-2 hover:text-text-primary cursor-pointer"><span>📊</span> Architecture</li>
+                                                <li className="flex items-center gap-2 p-2 hover:text-text-primary cursor-pointer"><span>📦</span> Components</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2 text-text-secondary">
-                                    <p><span className="text-action-primary">✓</span> Analyzing repository structure...</p>
-                                    <p><span className="text-action-primary">✓</span> Detecting frameworks & patterns...</p>
-                                    <p><span className="text-action-primary">✓</span> Generating Product Requirements Document...</p>
-                                    <p><span className="text-action-primary">✓</span> Creating User Stories & Acceptance Criteria...</p>
-                                    <p><span className="text-action-primary">✓</span> Building Technical Architecture Docs...</p>
-                                    <p className="pt-2 text-action-primary font-semibold">
-                                        ✨ 12 documents generated successfully!
-                                    </p>
+                                <div className="flex-1 bg-[#0f0f11] p-8 overflow-hidden relative">
+                                    <div className="max-w-3xl mx-auto">
+                                        <div className="flex items-center gap-2 text-action-primary text-sm mb-4 font-mono">Guides / Getting Started</div>
+                                        <h2 className="text-3xl font-bold text-white mb-4">Quickstart Guide</h2>
+                                        <p className="text-slate-400 mb-8 leading-relaxed">Start building intelligent documentation in under five minutes. Our AI agents will scan your codebase and suggest structure.</p>
+                                        <div className="grid grid-cols-2 gap-4 mb-8">
+                                            <div className="p-4 rounded-xl bg-bg-tertiary border border-surface-border hover:border-action-primary/50 transition-colors group cursor-pointer text-white">
+                                                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">🚀</div>
+                                                <h3 className="font-medium mb-1">Quickstart</h3>
+                                                <p className="text-xs text-slate-500">Deploy your first docs site in minutes.</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl bg-bg-tertiary border border-surface-border hover:border-action-primary/50 transition-colors group cursor-pointer text-white">
+                                                <div className="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">💻</div>
+                                                <h3 className="font-medium mb-1">Installation</h3>
+                                                <p className="text-xs text-slate-500">Install the CLI to preview locally.</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 rounded-lg bg-bg-tertiary border border-surface-border font-mono text-xs text-slate-300">
+                                            <div className="flex justify-between items-center mb-2 border-b border-surface-border pb-2 text-slate-500">
+                                                <span>Terminal</span>
+                                                <span className="cursor-pointer hover:text-white">📋</span>
+                                            </div>
+                                            <span className="text-action-primary">$</span> npm install -g devdocs-cli<br />
+                                            <span className="text-action-primary">$</span> devdocs init
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-8 right-8 w-80 bg-bg-secondary border border-surface-border rounded-xl shadow-2xl p-4 animate-bounce-slow">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-action-primary to-teal-300 flex items-center justify-center">✨</div>
+                                            <div>
+                                                <div className="text-sm font-medium text-white">AI Assistant</div>
+                                                <div className="text-xs text-action-primary">Generating update...</div>
+                                            </div>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-surface-border rounded-full overflow-hidden">
+                                            <div className="h-full bg-action-primary w-2/3 rounded-full"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -272,19 +300,12 @@ export default function LandingPage() {
 
             {/* ═══════ TRUSTED BY / STATS ═══════ */}
             <section id="stats" ref={statsRefCallback} className="relative z-10 py-16 border-t border-b border-surface-border bg-bg-secondary/50">
-                <div className="max-w-5xl mx-auto px-6 lg:px-8">
-                    <p className="text-center text-sm text-text-faded uppercase tracking-widest mb-10 font-medium">Trusted by developers worldwide</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-                        {[
-                            { value: projects, suffix: "+", label: "Projects Created" },
-                            { value: docs, suffix: "+", label: "Documents Generated" },
-                            { value: devs, suffix: "+", label: "Active Developers" },
-                        ].map((stat) => (
-                            <div key={stat.label} className="group">
-                                <p className="text-4xl md:text-5xl font-bold gradient-text tabular-nums">
-                                    {stat.value.toLocaleString()}{stat.suffix}
-                                </p>
-                                <p className="text-sm text-text-muted mt-2">{stat.label}</p>
+                <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                    <p className="text-center text-sm font-medium text-text-faded uppercase tracking-widest mb-10">TRUSTED BY INNOVATIVE ENGINEERING TEAMS</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                        {["Vercel", "Coinbase", "AWS", "Linear", "OpenAI", "Supabase"].map((logo) => (
+                            <div key={logo} className="flex items-center gap-2 text-xl font-bold text-text-primary">
+                                {logo}
                             </div>
                         ))}
                     </div>
@@ -293,14 +314,14 @@ export default function LandingPage() {
 
             {/* ═══════ FEATURES ═══════ */}
             <section id="features" className="relative z-10 py-24 md:py-32">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <p className="text-sm text-action-primary font-semibold uppercase tracking-widest mb-3">Features</p>
-                        <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                            Everything you need for <span className="gradient-text">world-class docs</span>
-                        </h2>
-                        <p className="max-w-xl mx-auto text-text-muted">
-                            A complete documentation platform that integrates AI into every part of your docs lifecycle.
+                <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className="text-base text-action-primary font-semibold tracking-wide uppercase">End-to-End Workflow</h2>
+                        <p className="mt-2 text-3xl leading-[1.2] font-bold tracking-tight text-text-primary sm:text-4xl">
+                            Built for the Intelligence Age
+                        </p>
+                        <p className="mt-4 max-w-2xl text-xl text-text-muted mx-auto">
+                            Integrate AI into every part of your docs lifecycle. Woven into how your knowledge is written, maintained, and understood.
                         </p>
                     </div>
 
@@ -312,93 +333,174 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* ═══════ HOW IT WORKS ═══════ */}
-            <section id="how-it-works" className="relative z-10 py-24 md:py-32 bg-bg-secondary/40">
-                <div className="max-w-5xl mx-auto px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <p className="text-sm text-action-primary font-semibold uppercase tracking-widest mb-3">How It Works</p>
-                        <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                            From zero to docs in <span className="gradient-text">minutes</span>
-                        </h2>
-                        <p className="max-w-xl mx-auto text-text-muted">
-                            A simple, four-step process to generate beautiful documentation for any project.
-                        </p>
-                    </div>
+            {/* ═══════ WORKFLOW SECTIONS ═══════ */}
+            <section className="py-24 bg-bg-primary relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+                    <div className="grid lg:grid-cols-2 gap-8 mb-8">
+                        {/* Built for people and AI */}
+                        <div className="bg-bg-secondary rounded-3xl p-8 border border-surface-border shadow-sm hover:shadow-md transition-shadow">
+                            <div className="mb-6 inline-flex items-center justify-center p-3 bg-action-primary/10 rounded-xl text-action-primary">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </div>
+                            <h3 className="text-2xl font-bold text-text-primary mb-4">Built for both people and AI</h3>
+                            <p className="text-text-muted mb-8 text-lg">
+                                Ensure your product shows up in the AI workflows users already rely on. We support llms.txt, MCP, and whatever comes next.
+                            </p>
+                            <div className="bg-bg-tertiary/40 rounded-xl p-6 border border-surface-border relative overflow-hidden min-h-[200px] flex items-center justify-center">
+                                <div className="relative w-full max-w-[280px]">
+                                    <div className="bg-bg-secondary rounded-lg shadow-lg border border-surface-border p-4 relative z-10">
+                                        <div className="flex items-center gap-3 mb-3 border-b border-surface-border pb-3">
+                                            <div className="w-2 h-2 rounded-full bg-action-success"></div>
+                                            <div className="h-2 w-20 bg-surface-border rounded"></div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="h-2 w-full bg-surface-border rounded"></div>
+                                            <div className="h-2 w-3/4 bg-surface-border rounded"></div>
+                                        </div>
+                                        <div className="mt-4 flex justify-end">
+                                            <div className="px-2 py-1 bg-surface-border rounded text-[10px] text-text-muted font-mono">llms.txt</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {steps.map((step, i) => (
-                            <StepCard key={step.num} step={step} index={i} />
-                        ))}
+                        {/* Self-updating knowledge */}
+                        <div className="bg-bg-secondary rounded-3xl p-8 border border-surface-border shadow-sm hover:shadow-md transition-shadow">
+                            <div className="mb-6 inline-flex items-center justify-center p-3 bg-blue-100/10 rounded-xl text-blue-500">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                            </div>
+                            <h3 className="text-2xl font-bold text-text-primary mb-4">Self-updating knowledge</h3>
+                            <p className="text-text-muted mb-8 text-lg">
+                                Draft, edit, and maintain content with a context-aware agent. Move faster and more consistently without the documentation debt.
+                            </p>
+                            <div className="bg-bg-tertiary/40 rounded-xl p-6 border border-surface-border relative overflow-hidden min-h-[200px] flex items-center justify-center">
+                                <div className="flex items-center gap-6">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-12 h-12 rounded-full bg-action-success text-white flex items-center justify-center shadow-lg shadow-action-success/20">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        </div>
+                                        <span className="text-xs font-medium text-text-faded">Docs</span>
+                                    </div>
+                                    <div className="h-px w-8 bg-surface-border"></div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-12 h-12 rounded-full bg-action-primary text-white flex items-center justify-center shadow-lg shadow-action-primary/20 animate-pulse">
+                                            ✨
+                                        </div>
+                                        <span className="text-xs font-medium text-text-faded">Syncing</span>
+                                    </div>
+                                    <div className="h-px w-8 bg-surface-border"></div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-12 h-12 rounded-full bg-bg-tertiary text-text-faded flex items-center justify-center border-2 border-dashed border-surface-border">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                        </div>
+                                        <span className="text-xs font-medium text-text-faded">Code</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* ═══════ BENTO SHOWCASE ═══════ */}
-            <section className="relative z-10 py-24 md:py-32">
+            {/* ═══════ ENTERPRISE REINVENTION ═══════ */}
+            <section className="py-24 bg-bg-secondary border-t border-surface-border">
+                <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+                        <div className="lg:w-1/2">
+                            <div className="text-xs font-bold text-action-primary tracking-widest uppercase mb-4">Enterprise-Reinvention</div>
+                            <h2 className="text-4xl font-bold text-text-primary mb-6">Bring intelligence to <br />enterprise knowledge</h2>
+                            <p className="text-lg text-text-muted mb-8">
+                                Modernize without the rebuild with enterprise-grade professional service & security.
+                            </p>
+                            <div className="space-y-8">
+                                <div className="flex gap-4">
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-action-primary/10 flex items-center justify-center text-action-primary font-bold">🤝</div>
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-text-primary mb-2">Build with partnership</h4>
+                                        <p className="text-text-muted text-sm leading-relaxed">
+                                            Direct, white-glove access to our documentation experts. Dedicated migration support and guidance tailored to your setup.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100/10 flex items-center justify-center text-blue-500 font-bold">🛡️</div>
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-text-primary mb-2">Compliance and access control</h4>
+                                        <p className="text-text-muted text-sm leading-relaxed">
+                                            Compliant with SOC 2, and in the process for ISO/27001 and GDPR compliance to meet your internal requirements.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-10">
+                                <Button variant="secondary" size="lg" className="rounded-full">
+                                    Explore for enterprise
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="lg:w-1/2 w-full">
+                            <div className="relative rounded-3xl overflow-hidden shadow-2xl group h-[500px]">
+                                <img
+                                    alt="Abstract architectural landscape"
+                                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9B90wCVw3bKQj8nClIIrCapvG7e2zz7o4P-CoyvsB7ZI-WAEcSYc589l-FjPxlIIqcb-2FGZbwYPCNQrjLnjreuJDaJXt_q09t-hAiJ1YqmbxOJVpDDojSr1IoR2hsHstywST56JjZ-aP3eFWJwI1evTh9PBi8dsiQ8JdxthjD7tAM-lGiv8rZx1qt4K_x_BjyZUvFYsHwXtjPAtq3JSnEWxmlmjP9pqmeulXXuP5NQcUItzZRFkZ2PLvfDQi_Tzfn9PC8BeRaH7_"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-[#0c0c0e]/40 to-transparent opacity-90"></div>
+                                <div className="absolute bottom-0 left-0 p-8 w-full z-10">
+                                    <div className="text-xs font-bold text-action-primary mb-2 uppercase tracking-wide">Customer Story</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">See how Anthropic accelerates <br /> AI development with DevDocs</h3>
+                                    <div className="flex items-center gap-2 text-white/80 text-sm hover:text-white cursor-pointer transition-colors mb-8">
+                                        Read story <span>→</span>
+                                    </div>
+                                    <div className="flex items-end gap-12 border-t border-white/10 pt-6">
+                                        <div>
+                                            <div className="text-4xl font-bold text-white mb-1">2M+</div>
+                                            <div className="text-xs text-white/60">Monthly active developers</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-4xl font-bold text-white mb-1">3+</div>
+                                            <div className="text-xs text-white/60">Products serviced</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════ CUSTOMERS ═══════ */}
+            <section className="py-24 bg-bg-primary">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="text-center mb-16">
-                        <p className="text-sm text-action-primary font-semibold uppercase tracking-widest mb-3">Built for the Intelligence Age</p>
-                        <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                            Documentation that&apos;s <span className="gradient-text">actually smart</span>
-                        </h2>
+                        <h2 className="text-xs font-bold text-action-primary tracking-widest uppercase mb-4">Customers</h2>
+                        <h3 className="text-3xl md:text-4xl font-bold text-text-primary">Unlock knowledge for any industry</h3>
+                        <p className="mt-4 text-text-muted max-w-2xl mx-auto">From frontier AI companies to consumer brands, leaders across industries scale with DevDocs.</p>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Large card */}
-                        <BentoCard
-                            className="lg:col-span-2 lg:row-span-2"
-                            title="AI-Native Content Generation"
-                            desc="Our AI engine doesn't just template docs — it understands your code's architecture, patterns, and intent to produce meaningful, accurate documentation."
-                            accent
-                        >
-                            <div className="mt-6 rounded-xl border border-surface-border bg-bg-tertiary/50 p-4 font-mono text-sm space-y-1">
-                                <p className="text-text-muted">{`// AI-generated from your codebase`}</p>
-                                <p><span className="text-[#c678dd]">export</span> <span className="text-[#61afef]">function</span> <span className="text-[#e5c07b]">createUser</span>(data: UserInput) {`{`}</p>
-                                <p className="pl-4"><span className="text-[#6a737d]">{"// Validates input, hashes password,"}</span></p>
-                                <p className="pl-4"><span className="text-[#6a737d]">{"// and persists to database"}</span></p>
-                                <p className="pl-4"><span className="text-[#c678dd]">return</span> db.users.<span className="text-[#61afef]">create</span>({`{ ...data }`});</p>
-                                <p>{`}`}</p>
-                            </div>
-                        </BentoCard>
-
-                        {/* Small cards */}
-                        <BentoCard
-                            title="Real-time Sync"
-                            desc="Push code, docs update. DevDocs stays in sync with your repository automatically."
-                        >
-                            <div className="flex items-center gap-3 mt-4">
-                                <div className="w-10 h-10 rounded-lg bg-action-primary/10 flex items-center justify-center">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-action-primary">
-                                        <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
-                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                                    </svg>
-                                </div>
-                                <div className="text-xs text-text-muted">
-                                    <p className="text-text-primary font-medium">Auto-sync enabled</p>
-                                    <p>Last synced 2m ago</p>
-                                </div>
-                            </div>
-                        </BentoCard>
-
-                        <BentoCard
-                            title="Team Collaboration"
-                            desc="Invite teammates, review docs together, and maintain a shared knowledge base."
-                        >
-                            <div className="flex -space-x-2 mt-4">
-                                {["#10b981", "#6366f1", "#f59e0b", "#ef4444"].map((c, i) => (
-                                    <div
-                                        key={i}
-                                        className="w-9 h-9 rounded-full border-2 border-bg-secondary flex items-center justify-center text-[11px] font-bold text-white"
-                                        style={{ background: c }}
-                                    >
-                                        {["SN", "AK", "JD", "MR"][i]}
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {[
+                            { name: "Perplexity", title: "How Perplexity transformed its documentation", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCgBAe5PEPMJ6DfTFp1YNFNbVpP_XZ7DmZq4bJ7dcVnJzCVM_nCQ6EFCCC-6bRrEvsAzk_5qP062Z0YPZxfgNAgmq3uRtBHUSAWLySshzZtxZe6Ulh9OiwFD6XPghXob4k4BOgM7qYJhPyKoS6O4vERCR59VJ9PH89vTbIFrYQ9BPGPTg1Sq2KErFWYxW4dN2jcBYLPitnRg5IB_SnFMwoFQNUl0eGwJl3U8kQXKY5qoyuJWXVCR1mfV0sHB-CUDJh7Rnd-Dv7V54Ri" },
+                            { name: "X", title: "How X is using DevDocs to power the developer experience", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDE-OEudg4fyY9FWZJOt2gbNMTlag8da-WKJiI-R8StNKhEATRH0y8qH_vSyqOF6bJqzRHJOHcVDclWSkQ2Tvo5To4D3CWXKkWohCeAwkr5-H9GhyFPW-Fv0nsUNQ9jGjZ0-FsX3RmW8H11h36teXyiUkEBchNg3X8Y_upDD_8VG9QsiT3jkhmVHYe1oK-I9BNLmXfK4FYBqzYCwKJMR_2jSW0QcmBNewz2YnR0JQjTzV9Pivjkaq5YgrFZraPA0gJQfrzBK_ynakNy" },
+                            { name: "Kalshi", title: "How Kalshi helps developers drive broader prediction markets", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCBT64ANp3o2UluoechV7d525D3cma_vNk90oKfPGiLwOT_1Y6kICERPBkKEcupVLBrq03oChLNkbdk_GXhX8FmNboQbb6YbStgJiXXqsfx1eXOiR4Tlu4FfOZJjwHAUp4qgZQpiiUfjNtyywcHiW0WWHbW2RhX1i0vW0x_vKVpY47ZgpC1tryTp4dNSWQRkQX4MstrAQ_zLz5m4ZOK0no_quqVs-89uwqu_ib1P7hGG-5P-Lje6lJXxtGmeJy3XCmvQ4wWjFmWs-n9" }
+                        ].map((customer) => (
+                            <div key={customer.name} className="group cursor-pointer">
+                                <div className="rounded-2xl overflow-hidden bg-bg-tertiary aspect-video relative mb-4">
+                                    <img
+                                        alt={customer.name}
+                                        className="object-cover w-full h-full opacity-60 group-hover:scale-105 transition-transform duration-500"
+                                        src={customer.img}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-white font-bold text-xl tracking-tight uppercase">{customer.name}</span>
                                     </div>
-                                ))}
-                                <div className="w-9 h-9 rounded-full border-2 border-bg-secondary bg-surface-hover flex items-center justify-center text-[11px] font-medium text-text-muted">
-                                    +8
+                                </div>
+                                <h4 className="text-sm font-semibold text-text-primary mb-1">{customer.title}</h4>
+                                <div className="text-xs text-text-faded flex items-center gap-1 group-hover:text-action-primary transition-colors">
+                                    Read story <span>→</span>
                                 </div>
                             </div>
-                        </BentoCard>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -435,66 +537,62 @@ export default function LandingPage() {
             </section>
 
             {/* ═══════ FOOTER ═══════ */}
-            <footer className="relative z-10 border-t border-surface-border bg-bg-secondary/60 py-16">
+            <footer className="bg-bg-primary border-t border-surface-border pt-16 pb-8 relative z-10">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-12">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
+                        <div className="col-span-2 lg:col-span-2">
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="w-8 h-8 rounded bg-action-primary flex items-center justify-center text-white">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                </div>
+                                <span className="font-bold text-xl tracking-tight text-text-primary">DevDocs AI</span>
+                            </div>
+                            <div className="flex gap-4 mb-6">
+                                <a className="text-text-faded hover:text-text-primary transition-colors" href="#">GitHub</a>
+                                <a className="text-text-faded hover:text-text-primary transition-colors" href="#">Twitter</a>
+                                <a className="text-text-faded hover:text-text-primary transition-colors" href="#">LinkedIn</a>
+                            </div>
+                        </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-text-faded mb-4">Product</p>
-                            <ul className="space-y-2.5 text-sm text-text-muted">
-                                <li><a href="#features" className="hover:text-text-primary transition-colors">Features</a></li>
-                                <li><a href="#how-it-works" className="hover:text-text-primary transition-colors">How It Works</a></li>
-                                <li><Link href="/dashboard" className="hover:text-text-primary transition-colors">Dashboard</Link></li>
+                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Explore</h4>
+                            <ul className="space-y-3 text-sm text-text-muted">
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Startups</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Enterprise</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Pricing</a></li>
                             </ul>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-text-faded mb-4">Resources</p>
-                            <ul className="space-y-2.5 text-sm text-text-muted">
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Documentation</a></li>
-                                <li><a href="#" className="hover:text-text-primary transition-colors">API Reference</a></li>
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Blog</a></li>
+                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Resources</h4>
+                            <ul className="space-y-3 text-sm text-text-muted">
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Blog</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Guides</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">API Reference</a></li>
                             </ul>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-text-faded mb-4">Company</p>
-                            <ul className="space-y-2.5 text-sm text-text-muted">
-                                <li><a href="#" className="hover:text-text-primary transition-colors">About</a></li>
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Careers</a></li>
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Contact</a></li>
+                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Documentation</h4>
+                            <ul className="space-y-3 text-sm text-text-muted">
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Getting Started</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Components</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Changelog</a></li>
                             </ul>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-text-faded mb-4">Legal</p>
-                            <ul className="space-y-2.5 text-sm text-text-muted">
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Privacy Policy</a></li>
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Terms of Service</a></li>
-                                <li><a href="#" className="hover:text-text-primary transition-colors">Security</a></li>
+                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Legal</h4>
+                            <ul className="space-y-3 text-sm text-text-muted">
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Privacy</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Terms</a></li>
+                                <li><a className="hover:text-action-primary transition-colors" href="#">Security</a></li>
                             </ul>
                         </div>
                     </div>
-
-                    <div className="pt-8 border-t border-surface-border flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-action-primary to-action-primary-hover flex items-center justify-center">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                    <polyline points="14 2 14 8 20 8" />
-                                </svg>
-                            </div>
-                            <span className="text-sm font-semibold gradient-text">DevDocs AI</span>
+                    <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-surface-border gap-4">
+                        <div className="flex items-center gap-2 px-3 py-1 rounded bg-action-success/10 text-action-success text-xs font-medium">
+                            <div className="w-2 h-2 rounded-full bg-action-success animate-pulse"></div>
+                            All systems normal
                         </div>
-                        <p className="text-xs text-text-faded">&copy; {new Date().getFullYear()} DevDocs AI. All rights reserved.</p>
-                        {/* Social icons */}
-                        <div className="flex items-center gap-4">
-                            <a href="#" className="text-text-faded hover:text-text-primary transition-colors" aria-label="GitHub">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                                </svg>
-                            </a>
-                            <a href="#" className="text-text-faded hover:text-text-primary transition-colors" aria-label="Twitter">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                </svg>
-                            </a>
+                        <div className="text-xs text-text-faded">
+                            © {new Date().getFullYear()} DevDocs AI, Inc.
                         </div>
                     </div>
                 </div>

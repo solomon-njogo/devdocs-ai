@@ -47,3 +47,17 @@ export async function getAuthGitHubUrl(): Promise<string> {
   const data = await api<{ url: string }>("/api/auth/github");
   return data.url;
 }
+
+export interface IntegrationStatus {
+  connected: boolean;
+}
+
+export interface AllIntegrationsStatus {
+  github: IntegrationStatus;
+  gitlab: IntegrationStatus;
+  linear: IntegrationStatus;
+}
+
+export async function getIntegrationStatus(): Promise<AllIntegrationsStatus> {
+  return api<AllIntegrationsStatus>("/api/auth/status");
+}
