@@ -1,10 +1,41 @@
 "use client";
-
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { UserMenu } from "@/components/UserMenu";
+import { getIntegrationStatus, type AllIntegrationsStatus, getAuthGitHubUrl } from "@/lib/api";
 
 export default function IntegrationsPage() {
+    const router = useRouter();
+    const [integrations, setIntegrations] = useState<AllIntegrationsStatus | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        getIntegrationStatus()
+            .then(setIntegrations)
+            .catch(err => {
+                console.error(err);
+                setError("Failed to load integrations status.");
+            })
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleConnect = async (name: string) => {
+        if (name === "GitHub") {
+            try {
+                const url = await getAuthGitHubUrl();
+                window.location.href = url;
+            } catch (err) {
+                setError("Failed to start GitHub authentication.");
+            }
+        } else {
+            // For now, these are not implemented
+            alert(`${name} integration coming soon!`);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#070708] text-text-primary flex flex-col">
             <header className="sticky top-0 z-[50] border-b border-white/5 bg-[#070708]/80 backdrop-blur-xl">
@@ -30,24 +61,33 @@ export default function IntegrationsPage() {
                     <p className="text-text-muted">Manage your connections to external services.</p>
                 </div>
 
+                {error && (
+                    <div className="p-4 mb-6 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <div className="grid gap-6">
                     <IntegrationCard
                         name="GitHub"
                         description="Connect to your GitHub repositories to sync documentation."
                         icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" /></svg>}
-                        connected={false} // This should ideally be fetched from the API too, but it's a placeholder for now
+                        connected={integrations?.github.connected || false}
+                        onConnect={() => handleConnect("GitHub")}
                     />
                     <IntegrationCard
                         name="GitLab"
-                        description="Sync with your GitLab projects and issues."
+                        description="Sync with your GitLab projects and issues. (Coming Soon)"
                         icon={<span className="text-xl">🦊</span>}
-                        connected={false}
+                        connected={integrations?.gitlab.connected || false}
+                        onConnect={() => handleConnect("GitLab")}
                     />
                     <IntegrationCard
                         name="Linear"
-                        description="Link documentation to your Linear issues and cycles."
+                        description="Link documentation to your Linear issues and cycles. (Coming Soon)"
                         icon={<span className="text-xl">📈</span>}
-                        connected={false}
+                        connected={integrations?.linear.connected || false}
+                        onConnect={() => handleConnect("Linear")}
                     />
                 </div>
             </main>
@@ -55,7 +95,7 @@ export default function IntegrationsPage() {
     );
 }
 
-function IntegrationCard({ name, description, icon, connected }: { name: string, description: string, icon: React.ReactNode, connected: boolean }) {
+function IntegrationCard({ name, description, icon, connected, onConnect }: { name: string, description: string, icon: React.ReactNode, connected: boolean, onConnect: () => void }) {
     return (
         <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -67,8 +107,13 @@ function IntegrationCard({ name, description, icon, connected }: { name: string,
                     <p className="text-sm text-text-muted">{description}</p>
                 </div>
             </div>
-            <Button variant={connected ? "secondary" : "primary"} size="sm" className="rounded-full">
-                {connected ? "Disconnect" : "Connect"}
+            <Button
+                variant={connected ? "secondary" : "primary"}
+                size="sm"
+                className="rounded-full"
+                onClick={onConnect}
+            >
+                {connected ? "Connected" : "Connect"}
             </Button>
         </div>
     );

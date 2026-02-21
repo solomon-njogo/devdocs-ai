@@ -1,8 +1,7 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { UserMenu } from "@/components/UserMenu";
@@ -10,10 +9,11 @@ import { getProjects, type Project, type ProjectType } from "@/lib/projects";
 import { getIntegrationStatus, type AllIntegrationsStatus, getAuthGitHubUrl } from "@/lib/api";
 
 const NAV_ITEMS = [
-  { id: "all", label: "All Projects", icon: "🏠" },
-  { id: "recent", label: "Recently Viewed", icon: "🕒" },
-  { id: "starred", label: "Starred", icon: "⭐️" },
-  { id: "archived", label: "Archived", icon: "📦" },
+  { id: "all", label: "All Projects", icon: "🏠", href: "/dashboard" },
+  { id: "recent", label: "Recently Viewed", icon: "🕒", href: "/dashboard?tab=recent" },
+  { id: "starred", label: "Starred", icon: "⭐️", href: "/dashboard?tab=starred" },
+  { id: "archived", label: "Archived", icon: "📦", href: "/dashboard?tab=archived" },
+  { id: "prd-gen", label: "PRD Generator", icon: "✨", href: "/projects/prd-generator" },
 ];
 
 function projectTypeLabel(type: ProjectType): string {
@@ -37,10 +37,11 @@ function projectTypeIcon(type: ProjectType) {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const activeTab = searchParams?.get("tab") || "all";
   const [searchQuery, setSearchQuery] = useState("");
   const [integrations, setIntegrations] = useState<AllIntegrationsStatus | null>(null);
 
@@ -79,7 +80,7 @@ export default function DashboardPage() {
   }, []);
 
   const filteredProjects = projects
-    .filter((project) => {
+    .filter((project: Project) => {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         project.name.toLowerCase().includes(query) ||
@@ -96,7 +97,7 @@ export default function DashboardPage() {
 
       return true;
     })
-    .sort((a, b) => {
+    .sort((a: Project, b: Project) => {
       if (activeTab === "recent") {
         return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime();
       }
@@ -182,9 +183,9 @@ export default function DashboardPage() {
         <aside className="w-64 border-r border-white/5 py-8 px-4 hidden lg:block">
           <div className="space-y-1">
             {NAV_ITEMS.map((item) => (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                href={item.href}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === item.id
                   ? "bg-white/5 text-action-primary"
                   : "text-text-muted hover:text-text-primary hover:bg-white/5"
@@ -192,7 +193,7 @@ export default function DashboardPage() {
               >
                 <span className="text-lg">{item.icon}</span>
                 {item.label}
-              </button>
+              </Link>
             ))}
           </div>
 
@@ -305,9 +306,9 @@ export default function DashboardPage() {
                       Clear Search
                     </Button>
                   ) : activeTab !== "all" ? (
-                    <Button variant="secondary" size="sm" onClick={() => setActiveTab("all")} className="rounded-full">
+                    <Link href="/dashboard" className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-medium hover:bg-white/10 transition-colors">
                       View All Projects
-                    </Button>
+                    </Link>
                   ) : (
                     <Link href="/onboarding">
                       <Button variant="primary" size="sm" className="rounded-full">
@@ -317,7 +318,7 @@ export default function DashboardPage() {
                   )}
                 </div>
               )}
-              {filteredProjects.map((project, i) => (
+              {filteredProjects.map((project: Project, i: number) => (
                 <div
                   key={project.id}
                   className="group animate-fade-in"
