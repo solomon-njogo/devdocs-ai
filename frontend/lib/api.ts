@@ -5,8 +5,18 @@
 import { createSupabaseClient } from "@/lib/supabase";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const MAX_NETWORK_RETRIES = 2;
+const RETRY_DELAY_MS = 300;
 
 type ApiOptions = Omit<RequestInit, "body"> & { body?: object };
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableNetworkError(error: unknown): boolean {
+  return error instanceof TypeError;
+}
 
 async function getAccessToken(): Promise<string | null> {
   try {
@@ -28,12 +38,27 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    credentials: "include",
-    headers,
-    ...(body !== undefined && { body: JSON.stringify(body) }),
-  });
+  let res: Response;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        ...init,
+        credentials: "include",
+        headers,
+        ...(body !== undefined && { body: JSON.stringify(body) }),
+      });
+      break;
+    } catch (error) {
+      const method = (init.method ?? "GET").toUpperCase();
+      const canRetry = method === "GET" && attempt < MAX_NETWORK_RETRIES && isRetryableNetworkError(error);
+      if (canRetry) {
+        await sleep(RETRY_DELAY_MS * (attempt + 1));
+        continue;
+      }
+      throw new Error("Unable to reach the API server. Ensure the backend is running on port 4000.");
+    }
+  }
+
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as { message?: string };
     throw new Error(err.message ?? `Request failed: ${res.status}`);
@@ -46,4 +71,18 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 export async function getAuthGitHubUrl(): Promise<string> {
   const data = await api<{ url: string }>("/api/auth/github");
   return data.url;
+}
+
+export interface IntegrationStatus {
+  connected: boolean;
+}
+
+export interface AllIntegrationsStatus {
+  github: IntegrationStatus;
+  gitlab: IntegrationStatus;
+  linear: IntegrationStatus;
+}
+
+export async function getIntegrationStatus(): Promise<AllIntegrationsStatus> {
+  return api<AllIntegrationsStatus>("/api/auth/status");
 }
