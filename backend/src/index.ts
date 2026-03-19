@@ -22,8 +22,23 @@ import { webhookRoutes } from "./routes/webhooks.js";
 const app = express();
 const PORT = process.env.PORT ?? 4000;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
+const allowedOrigins = FRONTEND_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
 
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+// In development, also allow common network IPs (192.168.x.x, 10.x.x.x) on port 3000
+const isDev = process.env.NODE_ENV !== "production";
+const corsOrigin: cors.CorsOptions["origin"] = isDev
+  ? (origin, cb) => {
+      const allowed =
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):3000$/.test(origin);
+      cb(null, allowed ? origin || true : false);
+    }
+  : allowedOrigins.length > 1
+    ? allowedOrigins
+    : allowedOrigins[0];
+
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(
   express.json({
     verify: (req, _res, buf) => {
