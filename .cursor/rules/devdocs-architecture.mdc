@@ -8,21 +8,27 @@ alwaysApply: true
 
 ## Structure
 
-- `backend/src/modules/` contains domain modules: **ai-engine**, **github**, **doc-generator**
+- `backend/src/modules/` contains domain modules: **ai-engine**, **github**, **doc-generator**, **cie**
 - `backend/src/shared/` holds all shared types; modules MUST NOT define duplicate types
 - `backend/src/db/` is the data layer (Supabase)
 - `backend/src/routes/` — HTTP handlers only; delegate to modules
+- `backend/src/inngest/` — Inngest client and durable job functions
+- `frontend/app/docs/` — Public docs renderer (reads from Supabase via RLS)
 
 ## Dependency Flow
 
 ```
-routes → doc-generator → (ai-engine | github | db) → shared
+routes → (doc-generator | cie) → (ai-engine | github | db) → shared
+inngest/functions → cie → (ai-engine | github | db) → shared
+frontend/docs → Supabase (anon key, RLS public read)
 ```
 
 - **shared**: No internal dependencies
 - **ai-engine**, **github**, **db**: Depend on shared ONLY
-- **doc-generator**: Orchestrates ai-engine, github, db
-- **routes**: Import only from doc-generator (or high-level modules)
+- **cie**: Codebase Intelligence Engine; depends on ai-engine (embeddings), github (read), db, shared
+- **doc-generator**: Orchestrates ai-engine, github, db (legacy onboarding flow)
+- **inngest**: Durable jobs; imports from cie, db
+- **routes**: Import from modules; no business logic
 
 ## Conventions
 
@@ -35,8 +41,18 @@ routes → doc-generator → (ai-engine | github | db) → shared
 
 | Module | Responsibility |
 |--------|----------------|
-| ai-engine | LLM calls, prompts, content generation (PRD, user stories, API docs) |
-| github | OAuth, file read/write, webhook verification |
-| doc-generator | Orchestrates AI + GitHub, workflows, merge logic |
-| db | Supabase, RepoMeta, DocItem, AITrace |
+| ai-engine | LLM calls, prompts, embeddings, content generation |
+| github | OAuth, file read, repo tree listing, webhook verification |
+| cie | Codebase indexing, chunking, embedding, symbol extraction, context retrieval, Diátaxis doc generation |
+| doc-generator | Legacy onboarding: PRD/stories/journeys from idea or repo |
+| db | Supabase CRUD for all tables (projects, docs_pages, code_chunks, etc.) |
 | shared | Types, contracts, constants |
+| inngest | Durable background jobs: index-repository, generate-docs |
+
+## Data Flow (MVP)
+
+1. User connects repo → project created with `slug` + `repo_id`
+2. User triggers index → Inngest `cie/index-requested` → CIE walks repo → chunks stored in `code_chunks`
+3. Index complete → Inngest `cie/indexed` → Diátaxis router plans doc jobs → LLM generates each → upsert `docs_pages`
+4. Public renderer at `/docs/[projectSlug]` reads `docs_pages` via Supabase anon key (RLS: public projects)
+5. Cmd+K search queries `fts_docs` + `search_docs` RPCs via backend route

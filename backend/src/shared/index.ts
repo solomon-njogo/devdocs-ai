@@ -6,7 +6,9 @@
 
 export * from "./types/api.js";
 export * from "./types/auth.js";
+export * from "./types/cie.js";
 export * from "./types/doc.js";
+export * from "./types/docs-page.js";
 export * from "./types/github.js";
 export * from "./types/onboarding.js";
 export * from "./types/project.js";

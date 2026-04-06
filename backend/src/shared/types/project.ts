@@ -3,17 +3,28 @@
  * Used by DB layer and API responses; project is the first-class entity.
  */
 
+import type { CieStatus } from "./cie.js";
+
 /** First-class project entity (DB + API). Owned by userId when authenticated. */
 export interface Project {
   id: string;
   sessionId: string;
   userId?: string | null;
   name: string;
+  slug?: string | null;
   description?: string | null;
   type: "new_idea" | "existing";
   repoId?: string | null;
+  repoOwner?: string | null;
+  repoName?: string | null;
+  repoBranch: string;
   features?: string | null;
   requirements?: string | null;
+  cieStatus: CieStatus;
+  cieIndexedAt?: string | null;
+  cieChunkCount: number;
+  cieError?: string | null;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }

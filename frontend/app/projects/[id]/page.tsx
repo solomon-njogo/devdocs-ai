@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { UserMenu } from "@/components/UserMenu";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { getProject, createDoc, updateDoc, deleteDoc, type Project, type ProjectDoc, type ProjectDocType, type ProjectType } from "@/lib/projects";
+import { getProject, createDoc, updateDoc, deleteDoc, triggerIndex, type Project, type ProjectDoc, type ProjectDocType, type ProjectType, type CieStatus } from "@/lib/projects";
 
 function projectTypeLabel(t: ProjectType) { return t === "new_idea" ? "New idea" : "Existing repo"; }
 function docTypeLabel(t: ProjectDocType) { return t === "prd" ? "PRD" : t === "user_story" ? "User story" : "User journey"; }
@@ -35,6 +35,20 @@ export default function ProjectDetailPage() {
   const [newDocContent, setNewDocContent] = useState("");
   const [addDocSaving, setAddDocSaving] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [indexing, setIndexing] = useState(false);
+
+  const handleTriggerIndex = async () => {
+    if (!id) return;
+    setIndexing(true);
+    try {
+      await triggerIndex(id);
+      await loadProject();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start indexing.");
+    } finally {
+      setIndexing(false);
+    }
+  };
 
   const loadProject = useCallback(async () => {
     if (!id) return;
@@ -165,15 +179,41 @@ export default function ProjectDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* CIE status indicator */}
           <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/5 text-[11px] font-medium text-text-muted">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-action-success">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-            Synced with GitHub
+            <div className={`w-2 h-2 rounded-full ${
+              project.cieStatus === "indexed" ? "bg-green-500" :
+              project.cieStatus === "indexing" ? "bg-yellow-500 animate-pulse" :
+              project.cieStatus === "error" ? "bg-red-500" :
+              "bg-gray-500"
+            }`} />
+            {project.cieStatus === "indexed" ? "Indexed" :
+             project.cieStatus === "indexing" ? "Indexing..." :
+             project.cieStatus === "error" ? "Index error" :
+             "Not indexed"}
+            {project.cieChunkCount ? ` (${project.cieChunkCount} chunks)` : ""}
           </div>
-          <Button variant="primary" size="sm" className="rounded-full shadow-lg shadow-action-primary/10">
-            Push Updates
-          </Button>
+
+          {project.repoId && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleTriggerIndex}
+              disabled={indexing || project.cieStatus === "indexing"}
+              className="text-[10px]"
+            >
+              {indexing ? "Starting..." : "Reindex"}
+            </Button>
+          )}
+
+          {project.slug && (
+            <Link href={`/docs/${project.slug}`} target="_blank">
+              <Button variant="primary" size="sm" className="rounded-full shadow-lg shadow-action-primary/10">
+                View Docs
+              </Button>
+            </Link>
+          )}
+
           <div className="h-4 w-px bg-white/10" />
           <UserMenu />
         </div>

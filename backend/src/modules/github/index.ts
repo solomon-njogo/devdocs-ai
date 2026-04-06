@@ -4,6 +4,6 @@
  */
 
 export { getAuthorizationUrl, exchangeCodeForToken } from "./oauth.js";
-export { createOrUpdateFile, readFile } from "./files.js";
+export { createOrUpdateFile, readFile, listRepoFiles, type RepoFileEntry } from "./files.js";
 export { getRepoMetadata } from "./repos.js";
 export { verifyWebhookSignature } from "./webhooks.js";

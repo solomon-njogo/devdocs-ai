@@ -114,12 +114,18 @@ onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Respo
       repoId.trim(),
       token
     );
+    const trimmedRepoId = repoId.trim();
+    const [repoOwner, repoNamePart] = trimmedRepoId.includes("/")
+      ? trimmedRepoId.split("/")
+      : [null, null];
     const project = await createProject({
       userId,
       name: repoName,
       description: repoDescription,
       type: "existing",
-      repoId: repoId.trim(),
+      repoId: trimmedRepoId,
+      repoOwner: repoOwner ?? null,
+      repoName: repoNamePart ?? null,
     });
     const result = await reviewAndPushDocs(repoId.trim(), token);
     await setRepoToken(repoId.trim(), token, project.id);

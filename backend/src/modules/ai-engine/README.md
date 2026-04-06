@@ -18,7 +18,11 @@ Handles all LLM calls (OpenRouter/GPT-4). Generates PRDs, user stories, API docs
 ```ts
 generatePRD(input: string, context?: Record<string, unknown>): Promise<string>
 generateUserStories(input: string, context?: Record<string, unknown>): Promise<string>
+generateUserJourneys(input: string, context?: Record<string, unknown>): Promise<string>
 generateApiDocs(input: string, context?: Record<string, unknown>): Promise<string>
+complete(prompt: string, options?: CompleteOptions): Promise<string>
+embed(text: string): Promise<number[]>
+embedBatch(texts: string[]): Promise<number[][]>
 ```
 
 ## Conventions
