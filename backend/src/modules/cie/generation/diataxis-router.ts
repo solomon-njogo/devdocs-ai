@@ -25,37 +25,81 @@ async function getApiRoutes(projectId: string): Promise<ApiRoute[]> {
   const supabase = getSupabase();
   if (!supabase) return [];
 
-  const { data } = await supabase
+  const seen = new Set<string>();
+  const routes: ApiRoute[] = [];
+  const httpMethods = ["get", "post", "put", "patch", "delete"];
+
+  // Strategy 1: Next.js App Router — files named route.ts / route.js
+  // with exported HTTP method functions (GET, POST, etc.)
+  const { data: routeFiles } = await supabase
+    .from("indexed_files")
+    .select("file_path")
+    .eq("project_id", projectId)
+    .or("file_path.ilike.%/route.ts,file_path.ilike.%/route.js,file_path.ilike.%/route.tsx");
+
+  if (routeFiles) {
+    for (const file of routeFiles as Array<{ file_path: string }>) {
+      const { data: exports } = await supabase
+        .from("symbols")
+        .select("name")
+        .eq("project_id", projectId)
+        .eq("file_path", file.file_path)
+        .eq("is_exported", true);
+
+      const methods = (exports ?? [])
+        .map((s: { name: string }) => s.name.toUpperCase())
+        .filter((n: string) => httpMethods.includes(n.toLowerCase()));
+
+      if (methods.length === 0) continue;
+
+      const pathSegments = file.file_path
+        .replace(/^.*?app\//, "")
+        .replace(/\/route\.(ts|js|tsx)$/, "")
+        .replace(/\(.*?\)\//g, "");
+      const slug = pathSegments.replace(/\//g, "-").toLowerCase().replace(/[[\]]/g, "");
+      const apiPath = `/${pathSegments}`;
+
+      for (const method of methods) {
+        const key = `${method}:${slug}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        routes.push({ slug: `${slug}-${method.toLowerCase()}`, method, path: apiPath, filePath: file.file_path });
+      }
+    }
+  }
+
+  // Strategy 2: symbol-based heuristic (Express-style handlers, etc.)
+  const { data: symData } = await supabase
     .from("symbols")
     .select("name, file_path, signature")
     .eq("project_id", projectId)
     .eq("is_exported", true)
     .in("kind", ["function", "variable"]);
 
-  if (!data) return [];
+  if (symData) {
+    for (const sym of symData as Array<{ name: string; file_path: string; signature: string | null }>) {
+      const name = sym.name.toLowerCase();
+      const matchesRoute =
+        sym.file_path.includes("route") ||
+        sym.file_path.includes("api") ||
+        sym.file_path.includes("handler");
 
-  const routes: ApiRoute[] = [];
-  const httpMethods = ["get", "post", "put", "patch", "delete"];
+      if (!matchesRoute) continue;
 
-  for (const sym of data as Array<{ name: string; file_path: string; signature: string | null }>) {
-    const name = sym.name.toLowerCase();
-    const matchesRoute =
-      sym.file_path.includes("route") ||
-      sym.file_path.includes("api") ||
-      sym.file_path.includes("handler");
+      const method = httpMethods.find((m) => name.startsWith(m)) ?? "GET";
+      const slug = sym.name
+        .replace(/^(get|post|put|patch|delete)/i, "")
+        .replace(/Handler$/i, "")
+        .replace(/([A-Z])/g, "-$1")
+        .toLowerCase()
+        .replace(/^-/, "")
+        .replace(/-+/g, "-");
 
-    if (!matchesRoute) continue;
+      if (!slug) continue;
+      const key = `${method.toUpperCase()}:${slug}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
 
-    const method = httpMethods.find((m) => name.startsWith(m)) ?? "GET";
-    const slug = sym.name
-      .replace(/^(get|post|put|patch|delete)/i, "")
-      .replace(/Handler$/i, "")
-      .replace(/([A-Z])/g, "-$1")
-      .toLowerCase()
-      .replace(/^-/, "")
-      .replace(/-+/g, "-");
-
-    if (slug) {
       routes.push({
         slug,
         method: method.toUpperCase(),
@@ -66,6 +110,54 @@ async function getApiRoutes(projectId: string): Promise<ApiRoute[]> {
   }
 
   return routes;
+}
+
+interface HowToCandidate {
+  slug: string;
+  title: string;
+  sourceFiles: string[];
+  focusQuery: string;
+}
+
+const FIXED_HOWTOS: Omit<HowToCandidate, "sourceFiles">[] = [
+  { slug: "how-to/set-up-development", title: "How to set up local development", focusQuery: "local development setup install dependencies run dev server" },
+  { slug: "how-to/write-tests", title: "How to write and run tests", focusQuery: "testing test runner jest vitest unit test integration test" },
+  { slug: "how-to/deploy", title: "How to deploy the application", focusQuery: "deploy deployment production build CI CD" },
+];
+
+const HOWTO_PATTERNS: Record<string, { title: string; focusQuery: string; filePatterns: string[] }> = {
+  auth: { title: "How to set up authentication", focusQuery: "authentication login sign-in session JWT token", filePatterns: ["auth", "login", "session"] },
+  database: { title: "How to work with the database", focusQuery: "database migration schema query ORM prisma drizzle supabase", filePatterns: ["db", "database", "migration", "schema", "prisma", "drizzle"] },
+  api: { title: "How to add a new API endpoint", focusQuery: "API route endpoint handler request response middleware", filePatterns: ["api", "route", "handler", "endpoint"] },
+  webhooks: { title: "How to handle webhooks", focusQuery: "webhook handler signature verification event processing", filePatterns: ["webhook"] },
+};
+
+/** Derive L3 how-to candidates from indexed file patterns. */
+async function getHowToCandidates(projectId: string): Promise<HowToCandidate[]> {
+  const supabase = getSupabase();
+  if (!supabase) return FIXED_HOWTOS.map((h) => ({ ...h, sourceFiles: [] }));
+
+  const { data: files } = await supabase
+    .from("indexed_files")
+    .select("file_path")
+    .eq("project_id", projectId);
+
+  const allPaths = (files ?? []).map((f: { file_path: string }) => f.file_path.toLowerCase());
+  const candidates: HowToCandidate[] = FIXED_HOWTOS.map((h) => ({ ...h, sourceFiles: [] }));
+
+  for (const [key, cfg] of Object.entries(HOWTO_PATTERNS)) {
+    const matching = allPaths.filter((p) => cfg.filePatterns.some((pat) => p.includes(pat)));
+    if (matching.length >= 2) {
+      candidates.push({
+        slug: `how-to/${key}`,
+        title: cfg.title,
+        sourceFiles: matching.slice(0, 6),
+        focusQuery: cfg.focusQuery,
+      });
+    }
+  }
+
+  return candidates;
 }
 
 /** Identify major modules by grouping indexed files by top-level directory. */
@@ -105,7 +197,17 @@ async function getMajorModules(projectId: string): Promise<MajorModule[]> {
 export async function planDocJobs(projectId: string): Promise<DocJob[]> {
   const jobs: DocJob[] = [];
 
-  // Architecture overview (concept)
+  // L1 — Project overview (README-style mental model)
+  jobs.push({
+    projectId,
+    layer: "concept",
+    slug: "overview",
+    title: "Project overview",
+    sourceFiles: ["README.md", "package.json"],
+    focusQuery: "project overview purpose tech stack what this project does README",
+  });
+
+  // L1 — Architecture overview
   jobs.push({
     projectId,
     layer: "concept",
@@ -115,7 +217,7 @@ export async function planDocJobs(projectId: string): Promise<DocJob[]> {
     focusQuery: "system architecture modules dependencies design decisions",
   });
 
-  // Getting started (quickstart)
+  // L2 — Getting started (quickstart)
   jobs.push({
     projectId,
     layer: "quickstart",
@@ -125,7 +227,20 @@ export async function planDocJobs(projectId: string): Promise<DocJob[]> {
     focusQuery: "setup installation environment variables run development",
   });
 
-  // API reference pages
+  // L3 — How-to guides (fixed + dynamic)
+  const howtos = await getHowToCandidates(projectId);
+  for (const howto of howtos) {
+    jobs.push({
+      projectId,
+      layer: "howto",
+      slug: howto.slug,
+      title: howto.title,
+      sourceFiles: howto.sourceFiles,
+      focusQuery: howto.focusQuery,
+    });
+  }
+
+  // L4 — API reference pages
   const routes = await getApiRoutes(projectId);
   for (const route of routes) {
     jobs.push({
@@ -138,7 +253,7 @@ export async function planDocJobs(projectId: string): Promise<DocJob[]> {
     });
   }
 
-  // Environment variables reference
+  // L4 — Environment variables reference
   jobs.push({
     projectId,
     layer: "reference",
@@ -148,7 +263,7 @@ export async function planDocJobs(projectId: string): Promise<DocJob[]> {
     focusQuery: "process.env environment variables configuration",
   });
 
-  // Module concept guides
+  // L1 — Module concept guides
   const modules = await getMajorModules(projectId);
   for (const mod of modules) {
     jobs.push({

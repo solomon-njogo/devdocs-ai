@@ -44,11 +44,23 @@ RULES:
   reference: `
 DOCUMENT TYPE: API Reference (Diátaxis Layer 4).
 PURPOSE: Exhaustive, factual documentation. Every parameter, every response.
+FORMAT: Use the following section order (omit sections that don't apply):
+  1. Title — "METHOD /path" as an H2
+  2. One-sentence description of what the endpoint does
+  3. Authentication — what credentials are required and how to pass them
+  4. Path parameters — table: Parameter | Type | Required | Description
+  5. Query parameters — same table format
+  6. Request body — JSON example, then table: Field | Type | Required | Default | Description
+  7. Response — for each status code:
+     - Status code + meaning as bold header
+     - JSON example body
+  8. Example request — a working curl command
+  9. Related — bullet list of links to related endpoints or guides
 RULES:
 - No opinions, no explanations, no recommendations.
 - Document every parameter with: name, type, required/optional, description.
 - Document every response code with its body schema.
-- Include a working curl example request.
+- Include a working curl example request with realistic placeholder values.
 - Include a realistic example response in JSON.
 - If something is unclear from the code, write [TODO: confirm] — never guess.
 - Do NOT include a 'Getting started' or 'Overview' section.

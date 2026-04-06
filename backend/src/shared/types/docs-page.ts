@@ -45,6 +45,10 @@ export interface DocJob {
   title: string;
   sourceFiles: string[];
   focusQuery: string;
+  /** Set by the Inngest orchestrator so the LLM can emit correct wiki links. */
+  projectSlug?: string;
+  /** Compact list of sibling pages so the LLM can cross-link. */
+  siblingPages?: { slug: string; title: string; layer: DiátaxisLayer }[];
 }
 
 /** Search result returned from FTS or vector search. */

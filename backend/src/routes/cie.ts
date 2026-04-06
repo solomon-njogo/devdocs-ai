@@ -1,15 +1,71 @@
 /**
  * CIE routes: trigger indexing and check status.
  * Requires authentication.
+ *
+ * Runs indexing + doc generation directly (no Inngest dev server needed).
+ * Falls back to Inngest when INNGEST_EVENT_KEY is configured.
  */
 
 import { Router, Request, Response } from "express";
-import type { RequestWithUser } from "../shared/index.js";
-import { getProjectById } from "../db/index.js";
+import type { RequestWithUser, DiátaxisLayer } from "../shared/index.js";
+import { getProjectById, getRepoToken } from "../db/index.js";
+import { indexRepository } from "../modules/cie/index.js";
+import { planDocJobs } from "../modules/cie/generation/diataxis-router.js";
+import { generateDocPage } from "../modules/cie/generation/doc-generator.js";
 import { inngest } from "../inngest/client.js";
 import { logger } from "../logger/index.js";
 
 export const cieRoutes = Router();
+
+/**
+ * Run the full index → generate pipeline in-process.
+ * Fire-and-forget: errors are logged and reflected in cie_status.
+ */
+async function runPipelineDirect(
+  projectId: string,
+  repoId: string,
+  branch: string
+): Promise<void> {
+  const token = await getRepoToken(repoId);
+  if (!token) {
+    logger.error("Pipeline: no token available", { projectId, repoId });
+    return;
+  }
+
+  logger.info("Pipeline: starting indexing", { projectId, repoId, branch });
+  const result = await indexRepository(projectId, repoId, token, branch);
+  logger.info("Pipeline: indexing complete", {
+    projectId,
+    filesIndexed: result.filesIndexed,
+    chunks: result.chunksStored,
+    errors: result.errors.length,
+  });
+
+  const project = await getProjectById(projectId);
+  const jobs = await planDocJobs(projectId);
+  logger.info("Pipeline: generating docs", { projectId, jobCount: jobs.length });
+
+  const siblingPages = jobs.map((j) => ({
+    slug: j.slug,
+    title: j.title,
+    layer: j.layer as DiátaxisLayer,
+  }));
+
+  for (const job of jobs) {
+    try {
+      job.projectSlug = project?.slug ?? undefined;
+      job.siblingPages = siblingPages;
+      await generateDocPage(job);
+    } catch (err) {
+      logger.error("Pipeline: doc generation failed for page", {
+        slug: job.slug,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  logger.info("Pipeline: complete", { projectId, docsGenerated: jobs.length });
+}
 
 /** POST /api/projects/:id/index — trigger CIE indexing for a project. */
 cieRoutes.post("/projects/:id/index", async (req: Request, res: Response) => {
@@ -36,16 +92,24 @@ cieRoutes.post("/projects/:id/index", async (req: Request, res: Response) => {
       return;
     }
 
-    await inngest.send({
-      name: "cie/index-requested",
-      data: {
-        projectId: project.id,
-        repoId: project.repoId,
-        branch: project.repoBranch,
-      },
-    });
+    const useInngest = !!process.env.INNGEST_EVENT_KEY;
 
-    logger.info("CIE index requested", { projectId: project.id, repoId: project.repoId });
+    if (useInngest) {
+      await inngest.send({
+        name: "cie/index-requested",
+        data: {
+          projectId: project.id,
+          repoId: project.repoId,
+          branch: project.repoBranch,
+        },
+      });
+    } else {
+      runPipelineDirect(project.id, project.repoId, project.repoBranch ?? "main").catch(
+        (err) => logger.error("Background pipeline failed", { projectId: project.id, error: err })
+      );
+    }
+
+    logger.info("CIE index requested", { projectId: project.id, repoId: project.repoId, mode: useInngest ? "inngest" : "direct" });
     res.json({ message: "Indexing started. Check project status for progress." });
   } catch (err) {
     logger.error("CIE index trigger failed", { error: err });

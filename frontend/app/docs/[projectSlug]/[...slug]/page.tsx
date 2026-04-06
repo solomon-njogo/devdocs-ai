@@ -3,6 +3,8 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { MdxContent } from "../../_components/MdxContent";
 import { LayerBadge } from "../../_components/LayerBadge";
 import { TableOfContents } from "../../_components/TableOfContents";
+import { Breadcrumbs } from "../../_components/Breadcrumbs";
+import { SourceFiles } from "../../_components/SourceFiles";
 
 export default async function DocPage({
   params,
@@ -15,7 +17,7 @@ export default async function DocPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id")
+    .select("id, name, repo_owner, repo_name, repo_branch")
     .eq("slug", projectSlug)
     .single();
 
@@ -32,6 +34,13 @@ export default async function DocPage({
 
   return (
     <article className="relative">
+      <Breadcrumbs
+        projectSlug={projectSlug}
+        projectName={project.name}
+        layer={doc.layer}
+        docTitle={doc.title}
+      />
+
       {/* Layer badge + metadata */}
       <div className="flex items-center gap-3 mb-4">
         <LayerBadge layer={doc.layer} />
@@ -49,7 +58,15 @@ export default async function DocPage({
       <TableOfContents content={doc.content} />
 
       {/* Markdown content */}
-      <MdxContent source={doc.content} />
+      <MdxContent source={doc.content} projectSlug={projectSlug} />
+
+      {/* Source file links */}
+      <SourceFiles
+        files={doc.source_files ?? []}
+        repoOwner={project.repo_owner}
+        repoName={project.repo_name}
+        repoBranch={project.repo_branch}
+      />
     </article>
   );
 }

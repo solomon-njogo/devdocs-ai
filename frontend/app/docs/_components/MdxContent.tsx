@@ -23,11 +23,36 @@ function CopyButton({ code }: { code: string }) {
   );
 }
 
-export function MdxContent({ source }: { source: string }) {
+/**
+ * Resolve relative or bare-slug doc links to absolute wiki paths.
+ * Handles: ./foo, ../how-to/x, how-to/x (no leading slash, no protocol).
+ */
+function resolveDocHref(href: string, projectSlug?: string): string {
+  if (!projectSlug) return href;
+  if (!href || href.startsWith("http") || href.startsWith("#") || href.startsWith("mailto:")) return href;
+
+  // Already an absolute docs path
+  if (href.startsWith(`/docs/${projectSlug}/`)) return href;
+
+  // Strip leading ./ or ../
+  let slug = href.replace(/^(\.\.?\/)+/, "");
+  // Strip .md extension if the LLM added one
+  slug = slug.replace(/\.md$/, "");
+
+  if (!slug) return href;
+
+  // If it already has a leading slash but isn't a docs path, leave it
+  if (href.startsWith("/") && !href.startsWith("/docs/")) return href;
+
+  return `/docs/${projectSlug}/${slug}`;
+}
+
+export function MdxContent({ source, projectSlug }: { source: string; projectSlug?: string }) {
   return (
     <div className="prose prose-slate dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        children={source}
         components={{
           pre: ({ children, ...props }: ComponentPropsWithoutRef<"pre">) => {
             const codeText =
@@ -60,17 +85,21 @@ export function MdxContent({ source }: { source: string }) {
               {...props}
             />
           ),
-          a: ({ href, children, ...props }: ComponentPropsWithoutRef<"a">) => (
-            <a
-              href={href}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-              target={href?.startsWith("http") ? "_blank" : undefined}
-              rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
-              {...props}
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children, ...props }: ComponentPropsWithoutRef<"a">) => {
+            const resolved = resolveDocHref(href ?? "", projectSlug);
+            const isExternal = resolved.startsWith("http");
+            return (
+              <a
+                href={resolved}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+                target={isExternal ? "_blank" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
+                {...props}
+              >
+                {children}
+              </a>
+            );
+          },
           h2: ({ children, ...props }: ComponentPropsWithoutRef<"h2">) => {
             const id = String(children ?? "")
               .toLowerCase()

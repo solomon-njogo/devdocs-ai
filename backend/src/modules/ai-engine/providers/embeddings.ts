@@ -1,24 +1,44 @@
 /**
- * Embedding provider: generates vector embeddings via OpenRouter-compatible endpoint.
- * Falls back to OpenAI embedding API format.
+ * Embedding provider: generates vector embeddings via OpenAI or OpenRouter.
+ * Uses OPENAI_API_KEY with OpenAI endpoint when available;
+ * falls back to OPENROUTER_API_KEY with OpenRouter endpoint.
  */
 
 import { logger } from "../../../logger/index.js";
 
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
-const DEFAULT_MODEL = "text-embedding-3-small";
+const OPENROUTER_EMBEDDINGS_URL = "https://openrouter.ai/api/v1/embeddings";
+const OPENAI_DEFAULT_MODEL = "text-embedding-3-small";
+const OPENROUTER_DEFAULT_MODEL = "openai/text-embedding-3-small";
 const BATCH_SIZE = 100;
 
-function getModel(): string {
-  return process.env.EMBEDDING_MODEL?.trim() || DEFAULT_MODEL;
+interface EmbeddingConfig {
+  url: string;
+  apiKey: string;
+  model: string;
 }
 
-function getApiKey(): string {
-  const key =
-    process.env.OPENAI_API_KEY?.trim() ||
-    process.env.OPENROUTER_API_KEY?.trim();
-  if (!key) throw new Error("No embedding API key set (OPENAI_API_KEY or OPENROUTER_API_KEY)");
-  return key;
+function getConfig(): EmbeddingConfig {
+  const openaiKey = process.env.OPENAI_API_KEY?.trim();
+  const openrouterKey = process.env.OPENROUTER_API_KEY?.trim();
+
+  if (openaiKey) {
+    return {
+      url: OPENAI_EMBEDDINGS_URL,
+      apiKey: openaiKey,
+      model: process.env.EMBEDDING_MODEL?.trim() || OPENAI_DEFAULT_MODEL,
+    };
+  }
+
+  if (openrouterKey) {
+    return {
+      url: OPENROUTER_EMBEDDINGS_URL,
+      apiKey: openrouterKey,
+      model: process.env.EMBEDDING_MODEL?.trim() || OPENROUTER_DEFAULT_MODEL,
+    };
+  }
+
+  throw new Error("No embedding API key set (OPENAI_API_KEY or OPENROUTER_API_KEY)");
 }
 
 /** Generate an embedding vector for a single text string. */
@@ -31,19 +51,18 @@ export async function embed(text: string): Promise<number[]> {
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  const apiKey = getApiKey();
-  const model = getModel();
+  const cfg = getConfig();
   const allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
-    const res = await fetch(OPENAI_EMBEDDINGS_URL, {
+    const res = await fetch(cfg.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${cfg.apiKey}`,
       },
-      body: JSON.stringify({ input: batch, model }),
+      body: JSON.stringify({ input: batch, model: cfg.model }),
     });
 
     if (!res.ok) {

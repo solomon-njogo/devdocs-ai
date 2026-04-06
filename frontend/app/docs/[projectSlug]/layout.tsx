@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { NavTree, type NavGroup } from "../_components/Sidebar";
 import { SearchModal } from "../_components/SearchModal";
+import { DocsMobileNav } from "../_components/DocsMobileNav";
 
 const LAYER_ORDER = ["quickstart", "concept", "howto", "reference"];
 const LAYER_LABELS: Record<string, string> = {
@@ -41,7 +42,7 @@ async function getNavTree(projectId: string): Promise<NavGroup[]> {
   return LAYER_ORDER.filter((layer) => grouped.has(layer)).map((layer) => ({
     label: LAYER_LABELS[layer],
     layer,
-    items: grouped.get(layer)!,
+    items: grouped.get(layer)!.sort((a, b) => a.slug.localeCompare(b.slug)),
   }));
 }
 
@@ -67,7 +68,7 @@ export default async function DocsLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* Left sidebar */}
+      {/* Left sidebar — desktop */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r px-4 py-6 sticky top-0 h-screen overflow-y-auto bg-background">
         <div className="mb-6">
           <h1 className="font-semibold text-lg">{project.name}</h1>
@@ -78,7 +79,8 @@ export default async function DocsLayout({
 
       {/* Main content area */}
       <div className="flex-1 min-w-0">
-        <header className="border-b px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10">
+        <header className="border-b px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 bg-background/95 backdrop-blur z-10">
+          <DocsMobileNav tree={navTree} projectSlug={projectSlug} projectName={project.name} />
           <SearchModal projectId={project.id} projectSlug={projectSlug} />
         </header>
         <main className="px-4 sm:px-8 py-8 max-w-3xl">{children}</main>

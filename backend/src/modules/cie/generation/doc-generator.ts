@@ -11,11 +11,35 @@ import { upsertDocsPage } from "../../../db/index.js";
 import { LAYER_RULES } from "./prompt-templates.js";
 import { logger } from "../../../logger/index.js";
 
+function buildLinkInstruction(job: DocJob): string {
+  const lines: string[] = [];
+
+  lines.push("INTERNAL LINKS:");
+  if (job.projectSlug) {
+    lines.push(`When linking to other documentation pages, use absolute paths: /docs/${job.projectSlug}/<slug>`);
+  } else {
+    lines.push("When linking to other documentation pages, use relative slug paths: ./<slug>");
+  }
+
+  if (job.siblingPages?.length) {
+    lines.push("Available pages you can link to:");
+    for (const p of job.siblingPages) {
+      if (p.slug === job.slug) continue;
+      const prefix = job.projectSlug ? `/docs/${job.projectSlug}/${p.slug}` : `./${p.slug}`;
+      lines.push(`  - [${p.title}](${prefix}) (${p.layer})`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 /**
  * Generate one doc page from a planned job. Idempotent (upserts by project_id + slug).
  */
 export async function generateDocPage(job: DocJob): Promise<void> {
   const ctx = await assembleContext(job.projectId, job.focusQuery);
+
+  const linkInstruction = buildLinkInstruction(job);
 
   const prompt = [
     "You are generating documentation for a software project.",
@@ -23,6 +47,8 @@ export async function generateDocPage(job: DocJob): Promise<void> {
     `Slug: ${job.slug}`,
     "",
     LAYER_RULES[job.layer],
+    "",
+    linkInstruction,
     "",
     "CODEBASE CONTEXT:",
     ctx.prompt,
