@@ -33,41 +33,47 @@ export default async function DocPage({
   if (!doc) notFound();
 
   return (
-    <article className="relative">
-      <Breadcrumbs
-        projectSlug={projectSlug}
-        projectName={project.name}
-        layer={doc.layer}
-        docTitle={doc.title}
-      />
+    <div className="flex gap-10 items-start">
+      {/* Main content */}
+      <article className="flex-1 min-w-0 max-w-[720px]">
+        <Breadcrumbs
+          projectSlug={projectSlug}
+          projectName={project.name}
+          layer={doc.layer}
+          docTitle={doc.title}
+        />
 
-      {/* Layer badge + metadata */}
-      <div className="flex items-center gap-3 mb-4">
-        <LayerBadge layer={doc.layer} />
-        {doc.is_auto && (
-          <span className="text-xs text-muted-foreground">
-            Auto-generated · Last updated{" "}
-            {new Date(doc.updated_at).toLocaleDateString()}
-          </span>
-        )}
-      </div>
+        <div className="flex items-center gap-3 mb-5">
+          <LayerBadge layer={doc.layer} />
+          {doc.is_auto && (
+            <span className="text-[12px] text-muted-foreground">
+              Auto-generated &middot; Updated{" "}
+              {new Date(doc.updated_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          )}
+        </div>
 
-      <h1 className="text-3xl font-bold mb-6">{doc.title}</h1>
+        <h1 className="text-[2rem] font-bold tracking-tight leading-[1.2] text-foreground mb-3">
+          {doc.title}
+        </h1>
 
-      {/* Table of contents (right sidebar on wide screens) */}
+        <MdxContent source={doc.content} projectSlug={projectSlug} />
+
+        <SourceFiles
+          files={doc.source_files ?? []}
+          repoOwner={project.repo_owner}
+          repoName={project.repo_name}
+          repoBranch={project.repo_branch}
+        />
+      </article>
+
+      {/* Right rail — Table of Contents */}
       <TableOfContents content={doc.content} />
-
-      {/* Markdown content */}
-      <MdxContent source={doc.content} projectSlug={projectSlug} />
-
-      {/* Source file links */}
-      <SourceFiles
-        files={doc.source_files ?? []}
-        repoOwner={project.repo_owner}
-        repoName={project.repo_name}
-        repoBranch={project.repo_branch}
-      />
-    </article>
+    </div>
   );
 }
 

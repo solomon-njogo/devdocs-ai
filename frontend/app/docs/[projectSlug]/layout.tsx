@@ -3,6 +3,8 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { NavTree, type NavGroup } from "../_components/Sidebar";
 import { SearchModal } from "../_components/SearchModal";
 import { DocsMobileNav } from "../_components/DocsMobileNav";
+import { ThemeToggle } from "../_components/ThemeToggle";
+import Link from "next/link";
 
 const LAYER_ORDER = ["quickstart", "concept", "howto", "reference"];
 const LAYER_LABELS: Record<string, string> = {
@@ -67,23 +69,59 @@ export default async function DocsLayout({
   const navTree = await getNavTree(project.id);
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left sidebar — desktop */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r px-4 py-6 sticky top-0 h-screen overflow-y-auto bg-background">
-        <div className="mb-6">
-          <h1 className="font-semibold text-lg">{project.name}</h1>
-          <p className="text-xs text-muted-foreground mt-1">Documentation</p>
+    <div className="flex min-h-screen bg-background">
+      {/* ── Left sidebar ── */}
+      <aside className="hidden lg:flex w-[272px] shrink-0 flex-col border-r border-border sticky top-0 h-screen overflow-hidden bg-surface-sidebar">
+        <div className="px-5 pt-5 pb-4">
+          <Link
+            href={`/docs/${projectSlug}`}
+            className="flex items-center gap-2.5 group"
+          >
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">
+                {project.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span className="font-semibold text-[15px] text-foreground group-hover:text-primary transition-colors">
+              {project.name}
+            </span>
+          </Link>
         </div>
-        <NavTree tree={navTree} projectSlug={projectSlug} />
+
+        <div className="px-4 pb-4">
+          <SearchModal projectId={project.id} projectSlug={projectSlug} />
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 pb-6">
+          <NavTree tree={navTree} projectSlug={projectSlug} />
+        </nav>
+
+        <div className="px-4 py-3 border-t border-border">
+          <ThemeToggle />
+        </div>
       </aside>
 
-      {/* Main content area */}
-      <div className="flex-1 min-w-0">
-        <header className="border-b px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 bg-background/95 backdrop-blur z-10">
-          <DocsMobileNav tree={navTree} projectSlug={projectSlug} projectName={project.name} />
-          <SearchModal projectId={project.id} projectSlug={projectSlug} />
+      {/* ── Main area ── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile header */}
+        <header className="lg:hidden border-b border-border px-4 py-3 flex items-center gap-3 sticky top-0 bg-background/95 backdrop-blur-md z-10">
+          <DocsMobileNav
+            tree={navTree}
+            projectSlug={projectSlug}
+            projectName={project.name}
+          />
+          <div className="flex-1">
+            <SearchModal projectId={project.id} projectSlug={projectSlug} />
+          </div>
+          <ThemeToggle />
         </header>
-        <main className="px-4 sm:px-8 py-8 max-w-3xl">{children}</main>
+
+        {/* Content */}
+        <main className="flex-1 w-full max-w-[1200px] mx-auto">
+          <div className="px-6 sm:px-10 lg:px-16 py-10 lg:py-12">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

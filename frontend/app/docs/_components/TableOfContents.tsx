@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 
 interface TocItem {
   id: string;
@@ -26,24 +26,59 @@ function extractHeadings(markdown: string): TocItem[] {
 
 export function TableOfContents({ content }: { content: string }) {
   const headings = useMemo(() => extractHeadings(content), [content]);
+  const [activeId, setActiveId] = useState<string>("");
+
+  const handleScroll = useCallback(() => {
+    const headingElements = headings
+      .map((h) => document.getElementById(h.id))
+      .filter(Boolean) as HTMLElement[];
+
+    let current = "";
+    for (const el of headingElements) {
+      if (el.getBoundingClientRect().top <= 100) {
+        current = el.id;
+      }
+    }
+    setActiveId(current);
+  }, [headings]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   if (headings.length === 0) return null;
 
   return (
-    <nav className="hidden xl:block fixed right-8 top-24 w-56 max-h-[calc(100vh-8rem)] overflow-y-auto text-sm">
-      <p className="font-semibold mb-3 text-foreground/80">On this page</p>
-      <ul className="space-y-1.5">
-        {headings.map((h) => (
-          <li key={h.id} style={{ paddingLeft: `${(h.level - 2) * 12}px` }}>
-            <a
-              href={`#${h.id}`}
-              className="block text-muted-foreground hover:text-foreground transition-colors truncate"
-            >
-              {h.text}
-            </a>
-          </li>
-        ))}
-      </ul>
+    <nav className="hidden xl:block w-[220px] shrink-0 sticky top-12 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <div className="pl-6 border-l border-border">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+          On this page
+        </p>
+        <ul className="space-y-1">
+          {headings.map((h) => {
+            const isActive = activeId === h.id;
+            return (
+              <li
+                key={h.id}
+                style={{ paddingLeft: `${(h.level - 2) * 12}px` }}
+              >
+                <a
+                  href={`#${h.id}`}
+                  className={`block py-1 text-[13px] leading-snug transition-colors ${
+                    isActive
+                      ? "text-primary font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {h.text}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }

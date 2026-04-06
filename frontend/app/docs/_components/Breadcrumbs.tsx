@@ -21,17 +21,24 @@ export function Breadcrumbs({
   const layerLabel = LAYER_LABELS[layer] ?? layer;
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4 flex-wrap">
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-6 flex-wrap"
+    >
       <Link
         href={`/docs/${projectSlug}`}
-        className="hover:text-foreground transition-colors truncate max-w-[10rem]"
+        className="hover:text-foreground transition-colors"
       >
         {projectName}
       </Link>
-      <span aria-hidden>/</span>
-      <span className="truncate max-w-[8rem]">{layerLabel}</span>
-      <span aria-hidden>/</span>
-      <span className="text-foreground font-medium truncate max-w-[14rem]">{docTitle}</span>
+      <svg className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+      <span>{layerLabel}</span>
+      <svg className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+      <span className="text-foreground font-medium">{docTitle}</span>
     </nav>
   );
 }
