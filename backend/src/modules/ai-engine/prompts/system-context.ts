@@ -50,5 +50,7 @@ export function buildSystemContext(context?: PromptContext): string {
         `**Tech Stack Constraints:** ${techStack}`,
         "",
         "**Response Format:** Well-structured Markdown with the specific section headers requested below. Use tables where comparative data improves clarity.",
+        "",
+        "**Language:** Write the entire response in English only. Do not use Spanish, French, or any other language for headings, narrative prose, or tables.",
     ].join("\n");
 }

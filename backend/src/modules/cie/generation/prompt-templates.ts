@@ -5,6 +5,14 @@
 
 import type { DiátaxisLayer } from "../../../shared/index.js";
 
+/** Prepended to every doc-generation prompt so model output stays English. */
+export const OUTPUT_LANGUAGE_ENGLISH_ONLY = `
+LANGUAGE (mandatory):
+- Write the entire document in English only: headings, body text, lists, tables, troubleshooting, prerequisites, and any link anchor text you author.
+- Do not use Spanish, French, or any language other than English for narrative documentation.
+- When showing code from the codebase, preserve identifiers and string literals as in the source; add any new comments in English.
+`.trim();
+
 export const LAYER_RULES: Record<DiátaxisLayer, string> = {
   concept: `
 DOCUMENT TYPE: Concept guide (Diátaxis Layer 1).

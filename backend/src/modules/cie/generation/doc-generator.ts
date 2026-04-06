@@ -8,7 +8,7 @@ import type { DocJob } from "../../../shared/index.js";
 import { complete, embed } from "../../ai-engine/index.js";
 import { assembleContext } from "../retrieval/context-assembler.js";
 import { upsertDocsPage } from "../../../db/index.js";
-import { LAYER_RULES } from "./prompt-templates.js";
+import { LAYER_RULES, OUTPUT_LANGUAGE_ENGLISH_ONLY } from "./prompt-templates.js";
 import { logger } from "../../../logger/index.js";
 
 function buildLinkInstruction(job: DocJob): string {
@@ -43,6 +43,8 @@ export async function generateDocPage(job: DocJob): Promise<void> {
 
   const prompt = [
     "You are generating documentation for a software project.",
+    OUTPUT_LANGUAGE_ENGLISH_ONLY,
+    "",
     `Document to generate: ${job.title}`,
     `Slug: ${job.slug}`,
     "",
