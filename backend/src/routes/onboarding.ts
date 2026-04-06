@@ -7,7 +7,7 @@
 import { Router, Request, Response } from "express";
 import type { NewIdeaRequest, ReviewRepoRequest } from "../shared/index.js";
 import { generateDocsFromIdea, reviewAndPushDocs } from "../modules/doc-generator/index.js";
-import { getRepoMetadata } from "../modules/github/index.js";
+import { getRepoMetadata, listUserRepositories } from "../modules/github/index.js";
 import { getTokenFromRequest } from "./auth.js";
 import {
   createProject,
@@ -18,6 +18,32 @@ import type { RequestWithUser } from "../shared/index.js";
 import { logger } from "../logger/index.js";
 
 export const onboardingRoutes = Router();
+
+onboardingRoutes.get("/onboarding/github-repos", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as RequestWithUser).userId;
+    if (!userId) {
+      res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
+      return;
+    }
+    const token = getTokenFromRequest(req);
+    if (!token) {
+      res.status(401).json({
+        code: "UNAUTHORIZED",
+        message: "Please connect your GitHub account first.",
+      });
+      return;
+    }
+    const repos = await listUserRepositories(token);
+    res.json({ repos });
+  } catch (err) {
+    logger.error("Onboarding github-repos list failed", { error: err });
+    res.status(500).json({
+      code: "GITHUB_LIST_FAILED",
+      message: "We couldn't load your repositories from GitHub. Please try again.",
+    });
+  }
+});
 
 /** Map GeneratedDocItem type/path to project_docs shape. */
 function toProjectDocItem(

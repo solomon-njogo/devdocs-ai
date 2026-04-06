@@ -5,7 +5,11 @@
 
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
-import { getAuthorizationUrl, exchangeCodeForToken } from "../modules/github/index.js";
+import {
+  getAuthorizationUrl,
+  exchangeCodeForToken,
+  isGitHubOAuthConfigured,
+} from "../modules/github/index.js";
 import { getToken, setToken } from "../token-store.js";
 import { requireAuth } from "./auth-middleware.js";
 import type { RequestWithUser } from "../shared/index.js";
@@ -39,6 +43,14 @@ authRoutes.get("/auth/github", requireAuth, (req: Request, res: Response) => {
     const userId = (req as RequestWithUser).userId;
     if (!userId) {
       res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
+      return;
+    }
+    if (!isGitHubOAuthConfigured()) {
+      res.status(503).json({
+        code: "GITHUB_OAUTH_NOT_CONFIGURED",
+        message:
+          "GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the project .env (see https://github.com/settings/developers). GITHUB_CALLBACK_URL must match your OAuth app callback (e.g. http://localhost:4000/api/auth/github/callback).",
+      });
       return;
     }
     const state = createState(userId);

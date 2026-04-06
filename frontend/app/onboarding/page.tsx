@@ -24,6 +24,16 @@ interface ReviewRepoResponse {
   summary: string;
 }
 
+interface GitHubRepoItem {
+  fullName: string;
+  name: string;
+  private: boolean;
+  description: string | null;
+}
+
+const selectLikeInput =
+  "w-full min-h-[48px] bg-bg-primary text-text-primary border border-surface-border rounded-input pl-4 pr-11 py-3 text-base focus:outline-none focus:ring-2 focus:ring-action-primary/30 focus:border-action-primary transition-all duration-[var(--duration-normal)] disabled:opacity-40 disabled:cursor-not-allowed appearance-none";
+
 function StepDots({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-2">
@@ -148,6 +158,10 @@ export default function OnboardingPage() {
 
   // Existing Repo State
   const [repoId, setRepoId] = useState("");
+  const [githubRepos, setGithubRepos] = useState<GitHubRepoItem[] | null>(null);
+  const [githubReposLoading, setGithubReposLoading] = useState(false);
+  const [githubReposLoadError, setGithubReposLoadError] = useState<string | null>(null);
+  const [manualRepoEntry, setManualRepoEntry] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +169,34 @@ export default function OnboardingPage() {
   const [repoResult, setRepoResult] = useState<ReviewRepoResponse | null>(null);
   const [connected, setConnected] = useState(false);
   const [connectingGitHub, setConnectingGitHub] = useState(false);
+
+  useEffect(() => {
+    if (!connected || status !== "existing" || step !== 2) return;
+    let cancelled = false;
+    setGithubReposLoading(true);
+    setGithubReposLoadError(null);
+    void (async () => {
+      try {
+        const data = await api<{ repos: GitHubRepoItem[] }>("/api/onboarding/github-repos");
+        if (cancelled) return;
+        setGithubRepos(data.repos);
+        if (data.repos.length === 0) setManualRepoEntry(true);
+      } catch (e) {
+        if (cancelled) return;
+        setGithubReposLoadError(e instanceof Error ? e.message : "Could not load repositories.");
+        setGithubRepos([]);
+        setManualRepoEntry(true);
+      } finally {
+        if (!cancelled) setGithubReposLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [connected, status, step]);
+
+  const githubRepoListPending =
+    connected && status === "existing" && step === 2 && githubRepos === null && !manualRepoEntry;
 
   useEffect(() => {
     const p = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -598,16 +640,93 @@ export default function OnboardingPage() {
                         GitHub identity verified
                       </div>
                       <div className="space-y-2">
-                        <Input
-                          label="Target Repository"
-                          required
-                          autoFocus
-                          value={repoId}
-                          onChange={(e) => setRepoId(e.target.value)}
-                          placeholder="username/repository"
-                          className="text-lg py-6"
-                          hint="Format: owner/repo (e.g. facebook/react)"
-                        />
+                        {githubReposLoading || githubRepoListPending ? (
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium text-text-secondary">Target Repository</span>
+                            <div
+                              className={`${selectLikeInput} flex items-center gap-3 text-text-muted text-sm`}
+                              aria-busy="true"
+                            >
+                              <span className="w-4 h-4 border-2 border-action-primary/30 border-t-action-primary rounded-full animate-spin shrink-0" />
+                              Loading your GitHub repositories…
+                            </div>
+                          </div>
+                        ) : manualRepoEntry || !githubRepos?.length ? (
+                          <div className="space-y-3">
+                            <Input
+                              label="Target Repository"
+                              required
+                              autoFocus
+                              value={repoId}
+                              onChange={(e) => setRepoId(e.target.value)}
+                              placeholder="owner/repository"
+                              className="text-lg py-6"
+                              hint="Format: owner/repo (e.g. acme/mobile-app)"
+                            />
+                            {githubReposLoadError && (
+                              <p className="text-sm text-semantic-error-text" role="alert">
+                                {githubReposLoadError}
+                              </p>
+                            )}
+                            {githubRepos && githubRepos.length > 0 && (
+                              <button
+                                type="button"
+                                className="text-sm font-medium text-action-primary hover:text-action-primary-hover"
+                                onClick={() => {
+                                  setManualRepoEntry(false);
+                                  setRepoId("");
+                                  setGithubReposLoadError(null);
+                                }}
+                              >
+                                Choose from your repositories instead
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <label htmlFor="onboarding-repo-select" className="block text-sm font-medium text-text-secondary">
+                              Target Repository
+                            </label>
+                            <div className="relative">
+                              <select
+                                id="onboarding-repo-select"
+                                required
+                                value={repoId}
+                                onChange={(e) => setRepoId(e.target.value)}
+                                className={`${selectLikeInput} text-lg cursor-pointer`}
+                              >
+                                <option value="">Select a repository…</option>
+                                {githubRepos.map((r) => (
+                                  <option key={r.fullName} value={r.fullName}>
+                                    {r.fullName}
+                                    {r.private ? " · private" : ""}
+                                  </option>
+                                ))}
+                              </select>
+                              <span
+                                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
+                                aria-hidden
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M6 9l6 6 6-6" />
+                                </svg>
+                              </span>
+                            </div>
+                            <p className="text-sm text-text-muted">
+                              Repositories you own, collaborate on, or access via an organization.
+                            </p>
+                            <button
+                              type="button"
+                              className="text-sm font-medium text-action-primary hover:text-action-primary-hover"
+                              onClick={() => {
+                                setManualRepoEntry(true);
+                                setRepoId("");
+                              }}
+                            >
+                              Enter owner/repo manually
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-4 pt-4 border-t border-surface-border">
                         <Button type="button" variant="ghost" onClick={() => setStep(1)}>Back</Button>
