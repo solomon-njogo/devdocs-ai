@@ -5,8 +5,8 @@
 import { Router, Request, Response } from "express";
 import type { GitHubWebhookPayload } from "../shared/types/github.js";
 import { verifyWebhookSignature } from "../modules/github/index.js";
-import { reviewAndPushDocs } from "../modules/doc-generator/index.js";
 import { getRepoToken, getProjectIdByRepoId, upsertRepoMeta } from "../db/index.js";
+import { inngest } from "../inngest/client.js";
 import { logger } from "../logger/index.js";
 
 export const webhookRoutes = Router();
@@ -52,18 +52,24 @@ webhookRoutes.post("/webhooks/github", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const result = await reviewAndPushDocs(repoId, token);
     const projectId = await getProjectIdByRepoId(repoId);
+    if (projectId) {
+      await inngest.send({
+        name: "cie/index-requested",
+        data: { projectId, repoId, branch: defaultBranch, token },
+      });
+      logger.info("Webhook: CIE reindex queued", { repoId, projectId });
+    }
     await upsertRepoMeta({
       id: repoId,
       repoId,
-      lastDocState: result.paths.join(","),
+      lastDocState: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       projectId: projectId ?? undefined,
     });
-    res.status(200).json({ ok: true, message: "Docs synced." });
+    res.status(200).json({ ok: true, message: "Reindex queued." });
   } catch (err) {
-    logger.error("Webhook: doc sync failed", { error: err });
-    res.status(500).json({ code: "SYNC_FAILED", message: "Doc sync failed." });
+    logger.error("Webhook: reindex trigger failed", { error: err });
+    res.status(500).json({ code: "SYNC_FAILED", message: "Reindex trigger failed." });
   }
 });

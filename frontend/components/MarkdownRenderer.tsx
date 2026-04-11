@@ -4,6 +4,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import type { Components } from "react-markdown";
+import dynamic from "next/dynamic";
+
+const MermaidDiagram = dynamic(() => import("./MermaidDiagram"), { ssr: false });
 
 /* ── Custom component overrides for styling ── */
 const components: Components = {
@@ -84,6 +87,12 @@ const components: Components = {
     ),
     code: ({ children, className, ...props }) => {
         const isInline = !className;
+        const match = /language-(\w+)/.exec(className || "");
+        
+        if (!isInline && match && match[1] === "mermaid") {
+            return <MermaidDiagram chart={String(children).replace(/\n$/, "")} />;
+        }
+
         if (isInline) {
             return (
                 <code
@@ -200,7 +209,7 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
         <div className={`markdown-body ${className}`}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
+                rehypePlugins={[[rehypeHighlight, { ignoreMissing: true }]]}
                 components={components}
             >
                 {content}

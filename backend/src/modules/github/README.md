@@ -19,7 +19,11 @@ GitHub integration: OAuth, REST API for file operations, webhook handling.
 ```ts
 createOrUpdateFile(repoId: string, path: string, content: string, token: string): Promise<void>
 readFile(repoId: string, path: string, token: string): Promise<string>
+listRepoFiles(repoId: string, token: string, branch?: string): Promise<RepoFileEntry[]>
+getRepoMetadata(repoId: string, token: string): Promise<{ name: string; description: string }>
 verifyWebhookSignature(payload: string, signature: string, secret: string): boolean
+getAuthorizationUrl(state?: string): string
+exchangeCodeForToken(code: string): Promise<string>
 ```
 
 ## Conventions

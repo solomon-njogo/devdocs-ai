@@ -30,6 +30,9 @@ supabase db push --db-url "postgresql://postgres:PASSWORD@db.YOUR_PROJECT_REF.su
    - `20260215000002_create_projects.sql`
    - `20260215000003_create_project_docs.sql`
    - `20260215000004_add_project_id_to_repo_tables.sql`
+   - `20260215000005_add_user_id_to_projects.sql`
+   - `20260215000006_create_users_profile.sql`
+   - `20260215000007_mvp_cie_and_renderer.sql`
 
 **Option C — psql**
 
@@ -39,13 +42,23 @@ psql "..." -f supabase/migrations/20260215000001_create_repo_tokens.sql
 psql "..." -f supabase/migrations/20260215000002_create_projects.sql
 psql "..." -f supabase/migrations/20260215000003_create_project_docs.sql
 psql "..." -f supabase/migrations/20260215000004_add_project_id_to_repo_tables.sql
+psql "..." -f supabase/migrations/20260215000005_add_user_id_to_projects.sql
+psql "..." -f supabase/migrations/20260215000006_create_users_profile.sql
+psql "..." -f supabase/migrations/20260215000007_mvp_cie_and_renderer.sql
 ```
 
 ## Tables
 
-| Table          | Purpose |
-|----------------|---------|
-| `repo_meta`    | Repository metadata and last doc state (webhook sync); `project_id` links to owning project. |
-| `repo_tokens`  | GitHub access token per repo (webhook); `project_id` links to owning project. |
-| `projects`     | First-class project entity; name, description, features, requirements; scoped by session. |
-| `project_docs` | Generated docs (PRD, user stories, user journeys) linked to a project. |
+| Table              | Purpose |
+|--------------------|---------|
+| `repo_meta`        | Repository metadata and last doc state (webhook sync); `project_id` links to owning project. |
+| `repo_tokens`      | GitHub access token per repo (webhook); `project_id` links to owning project. |
+| `projects`         | Project entity with slug, repo info, CIE status, and public visibility flag. Owned by `user_id`. |
+| `project_docs`     | Legacy generated docs (PRD, user stories, user journeys) linked to a project. |
+| `users_profile`    | Display name and avatar per auth user; auto-created on signup. |
+| `indexed_files`    | CIE: tracked files per project with SHA and chunk counts. |
+| `code_chunks`      | CIE: semantic code chunks with pgvector embeddings for retrieval. |
+| `symbols`          | CIE: extracted symbols (functions, classes, types) per file. |
+| `file_dependencies`| CIE: import/dependency graph between files. |
+| `docs_pages`       | Renderer: generated documentation pages with Diátaxis layer, FTS vector, and embedding. |
+| `docs_nav`         | Renderer: optional custom nav config overrides per project. |

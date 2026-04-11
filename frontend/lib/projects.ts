@@ -6,14 +6,26 @@ import { api } from "@/lib/api";
 
 export type ProjectType = "new_idea" | "existing";
 
+export type CieStatus = "pending" | "indexing" | "generating" | "indexed" | "error";
+
 export interface Project {
   id: string;
   name: string;
+  slug?: string | null;
   description?: string | null;
   type: ProjectType;
   repoId?: string | null;
+  repoOwner?: string | null;
+  repoName?: string | null;
+  repoBranch?: string;
   features?: string | null;
   requirements?: string | null;
+  cieStatus?: CieStatus;
+  cieIndexedAt?: string | null;
+  cieChunkCount?: number;
+  cieDocsPlanned?: number;
+  cieError?: string | null;
+  isPublic?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -86,5 +98,12 @@ export async function updateDoc(
 export async function deleteDoc(projectId: string, docId: string): Promise<void> {
   await api<unknown>(`/api/projects/${projectId}/docs/${docId}`, {
     method: "DELETE",
+  });
+}
+
+/** Trigger CIE indexing for a project. */
+export async function triggerIndex(projectId: string): Promise<{ message: string }> {
+  return api<{ message: string }>(`/api/projects/${projectId}/index`, {
+    method: "POST",
   });
 }

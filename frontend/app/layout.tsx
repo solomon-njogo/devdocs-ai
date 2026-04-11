@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthGuard } from "@/components/AuthGuard";
 import { SupabaseEnvProvider } from "@/components/SupabaseEnvProvider";
 import "./globals.css";
 
@@ -53,7 +52,7 @@ export default function RootLayout({
           anonKey={supabaseAnonKey}
         >
           <ThemeProvider>
-            <AuthGuard>{children}</AuthGuard>
+            {children}
           </ThemeProvider>
         </SupabaseEnvProvider>
       </body>

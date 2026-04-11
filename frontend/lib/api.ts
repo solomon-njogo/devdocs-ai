@@ -4,7 +4,7 @@
 
 import { createSupabaseClient } from "@/lib/supabase";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-backend.vercel.app" : "http://localhost:4000");
 const MAX_NETWORK_RETRIES = 2;
 const RETRY_DELAY_MS = 300;
 

@@ -1,28 +1,27 @@
 # doc-generator
 
-Orchestrates ai-engine + github. Workflow logic, merge/conflict resolution, high-level doc operations.
+Legacy onboarding doc generation: PRD, user stories, user journeys from ideas or repos.
+For CIE-driven Diátaxis documentation, see the `cie` module.
 
 ## Scope
 
-- Generate docs using ai-engine
-- Push updates via github module
-- Merge and conflict resolution for existing docs
-- Workflow orchestration
+- Generate onboarding docs (PRD, user stories, user journeys) using ai-engine
+- No longer pushes files to GitHub in v1 (Supabase-first)
+- Workflow orchestration for the onboarding flow
 
 ## Dependencies
 
-- **Depends on:** `ai-engine`, `github`, `db`, `shared`
-- **Import from:** `@/modules/ai-engine`, `@/modules/github`, `@/shared`
+- **Depends on:** `ai-engine`, `github` (read only), `db`, `shared`
 
 ## Public API (index.ts)
 
 ```ts
+generateDocsFromIdea(idea: NewIdeaRequest): Promise<Omit<NewIdeaResponse, "project">>
+reviewAndPushDocs(repoId: string, token: string): Promise<ReviewRepoResult>
 generateAndPushPRD(repoId: string, input: string, token: string): Promise<{ path: string; content: string }>
 ```
 
 ## Conventions
 
-- Workflow logic in `workflows/`
-- Merge utilities in `merge.ts`
 - Export only via `index.ts`
 - This module orchestrates — it does not contain AI or GitHub primitives
