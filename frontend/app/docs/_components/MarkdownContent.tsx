@@ -6,6 +6,9 @@ import type { ComponentPropsWithoutRef } from "react";
 import { PreWithCopy } from "./PreWithCopy";
 import { ExternalLinkIcon } from "./icons/ExternalLinkIcon";
 import { resolveDocHref, toHeadingId } from "./mdx-utils";
+import dynamic from "next/dynamic";
+
+const MermaidDiagram = dynamic(() => import("@/components/MermaidDiagram"), { ssr: false });
 
 export function MarkdownContent({ source, projectSlug }: { source: string; projectSlug?: string }) {
   return (
@@ -14,6 +17,14 @@ export function MarkdownContent({ source, projectSlug }: { source: string; proje
         remarkPlugins={[remarkGfm]}
         components={{
           pre: (props: ComponentPropsWithoutRef<"pre">) => <PreWithCopy {...props} />,
+          // react-markdown places language-* class on the <code> element — intercept mermaid here
+          code: ({ className, children, ...props }: ComponentPropsWithoutRef<"code">) => {
+            const match = /language-(\w+)/.exec(className || "");
+            if (match && match[1] === "mermaid") {
+              return <MermaidDiagram chart={String(children).replace(/\n$/, "")} />;
+            }
+            return <code className={className} {...props}>{children}</code>;
+          },
           table: (props: ComponentPropsWithoutRef<"table">) => (
             <div className="overflow-x-auto my-6 rounded-lg border border-border">
               <table {...props} />
@@ -68,4 +79,3 @@ export function MarkdownContent({ source, projectSlug }: { source: string; proje
     </div>
   );
 }
-

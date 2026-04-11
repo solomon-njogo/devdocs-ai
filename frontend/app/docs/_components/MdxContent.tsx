@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { MarkdownContent } from "./MarkdownContent";
 import { PreWithCopy } from "./PreWithCopy";
+import { PreOrMermaid } from "./PreOrMermaid";
 import { ExternalLinkIcon } from "./icons/ExternalLinkIcon";
 import { resolveDocHref, toHeadingId } from "./mdx-utils";
 
@@ -10,7 +11,7 @@ export async function MdxContent({ source, projectSlug }: { source: string; proj
   const hrefFor = (href: string) => resolveDocHref(href, projectSlug);
 
   const components = {
-    pre: (props: ComponentPropsWithoutRef<"pre">) => <PreWithCopy {...props} />,
+    pre: (props: ComponentPropsWithoutRef<"pre">) => <PreOrMermaid {...props} />,
     table: (props: ComponentPropsWithoutRef<"table">) => (
       <div className="overflow-x-auto my-6 rounded-lg border border-border">
         <table {...props} />

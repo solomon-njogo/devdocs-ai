@@ -60,11 +60,11 @@ export function TableOfContents({ content }: { content: string }) {
           On this page
         </p>
         <ul className="space-y-1">
-          {headings.map((h) => {
+          {headings.map((h, i) => {
             const isActive = activeId === h.id;
             return (
               <li
-                key={h.id}
+                key={`${h.id}-${i}`}
                 style={{ paddingLeft: `${(h.level - 2) * 12}px` }}
               >
                 <a
