@@ -71,32 +71,38 @@ authRoutes.get("/auth/github", requireAuth, (req: Request, res: Response) => {
 });
 
 authRoutes.get("/auth/github/callback", async (req: Request, res: Response) => {
+  const state = req.query.state as string;
+  const userId = state ? parseState(state) : null;
+
   try {
     const code = req.query.code as string;
-    const state = req.query.state as string;
     if (!code) {
       res.redirect(`${FRONTEND_ORIGIN}/onboarding?error=missing_code`);
       return;
     }
-    const userId = state ? parseState(state) : null;
     if (!userId) {
       logger.warn("Auth: GitHub callback missing or invalid state");
       res.redirect(`${FRONTEND_ORIGIN}/onboarding?error=invalid_state`);
       return;
     }
+
+    const existingToken = await getToken(userId);
     const token = await exchangeCodeForToken(code);
-    await setToken(userId, token);
+
+    // Keep the persisted token in sync with the latest OAuth grant.
+    if (!existingToken || existingToken !== token) {
+      await setToken(userId, token);
+    }
+
     res.redirect(`${FRONTEND_ORIGIN}/onboarding?connected=1`);
   } catch (err) {
     if (isBadVerificationCodeError(err)) {
       // GitHub OAuth codes are single-use; if a duplicate callback arrives after success,
       // treat it as connected when a token already exists for this user.
-      const state = req.query.state as string;
-      const userId = state ? parseState(state) : null;
       if (userId) {
         const existingToken = await getToken(userId);
         if (existingToken) {
-          logger.warn("Auth: duplicate GitHub callback code received after successful connect", {
+          logger.debug("Auth: duplicate GitHub callback code received after successful connect", {
             userId,
           });
           res.redirect(`${FRONTEND_ORIGIN}/onboarding?connected=1`);
