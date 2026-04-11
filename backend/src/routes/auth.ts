@@ -17,7 +17,7 @@ import { logger } from "../logger/index.js";
 
 export const authRoutes = Router();
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-frontend.vercel.app" : "http://localhost:3000");
 const STATE_SECRET = process.env.GITHUB_CLIENT_SECRET ?? "";
 
 function createState(userId: string): string {

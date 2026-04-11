@@ -18,7 +18,7 @@ const LAYER_LABELS: Record<string, string> = {
   reference: "API reference",
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_API_BASE ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-backend.vercel.app" : "http://localhost:4000");
 
 export function SearchModal({
   projectId,

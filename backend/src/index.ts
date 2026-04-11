@@ -24,7 +24,7 @@ import { webhookRoutes } from "./routes/webhooks.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-frontend.vercel.app" : "http://localhost:3000");
 const allowedOrigins = FRONTEND_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
 
 // In development, also allow common network IPs (192.168.x.x, 10.x.x.x) on port 3000
