@@ -18,7 +18,11 @@ Handles all LLM calls (OpenRouter/GPT-4). Generates PRDs, user stories, API docs
 ```ts
 generatePRD(input: string, context?: Record<string, unknown>): Promise<string>
 generateUserStories(input: string, context?: Record<string, unknown>): Promise<string>
+generateUserJourneys(input: string, context?: Record<string, unknown>): Promise<string>
 generateApiDocs(input: string, context?: Record<string, unknown>): Promise<string>
+complete(prompt: string, options?: CompleteOptions): Promise<string>
+embed(text: string): Promise<number[]>
+embedBatch(texts: string[]): Promise<number[][]>
 ```
 
 ## Conventions
@@ -26,3 +30,5 @@ generateApiDocs(input: string, context?: Record<string, unknown>): Promise<strin
 - All prompts live in `prompts/`
 - Provider logic in `providers/`
 - Export only via `index.ts` — no deep imports from other modules
+- Prompts use explicit CO-STAR sections and XML tags to separate system directives from user payloads
+- Dynamic user input is escaped before interpolation into XML-tagged prompt blocks

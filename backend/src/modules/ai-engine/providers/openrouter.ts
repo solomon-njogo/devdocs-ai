@@ -6,10 +6,18 @@
 import { logger } from "../../../logger/index.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openrouter/free";
+const DEFAULT_MODELS = [
+  "openai/gpt-oss-120b:free",
+  "openai/gpt-oss-20b:free",
+  "z-ai/glm-4.5-air:free",
+];
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 120_000; // 2 minutes per request
+const MODEL_RATE_LIMIT_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+// In-memory cooldown tracking per process to avoid hammering models that just exhausted 429 retries.
+const modelCooldownUntil = new Map<string, number>();
 
 /** Default 2 retries (3 total attempts). Env OPENROUTER_MAX_RETRIES overrides; clamped to 1–3. */
 function getMaxRetries(): number {
@@ -42,6 +50,54 @@ export interface CompleteOptions {
   systemPrompt?: string;
 }
 
+type HttpError = Error & { status?: number; code?: string };
+
+function getModelCandidates(): string[] {
+  const fromList = process.env.OPENROUTER_MODELS
+    ?.split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (fromList && fromList.length > 0) {
+    return [...new Set(fromList)];
+  }
+
+  const singleModel = process.env.OPENROUTER_MODEL?.trim();
+  if (singleModel) {
+    return [singleModel];
+  }
+
+  return DEFAULT_MODELS;
+}
+
+function getModelCandidatesForAttempt(): string[] {
+  const models = getModelCandidates();
+  const now = Date.now();
+  const available = models.filter((model) => {
+    const cooldownUntil = modelCooldownUntil.get(model) ?? 0;
+    return cooldownUntil <= now;
+  });
+
+  // If all are cooling down, allow trying all models again rather than hard-failing.
+  return available.length > 0 ? available : models;
+}
+
+function getModelCooldownMs(): number {
+  const raw = process.env.OPENROUTER_MODEL_COOLDOWN_MS;
+  if (!raw) return MODEL_RATE_LIMIT_COOLDOWN_MS;
+  const parsed = parseInt(raw, 10);
+  if (Number.isNaN(parsed) || parsed < 0) return MODEL_RATE_LIMIT_COOLDOWN_MS;
+  return parsed;
+}
+
+function markModelRateLimited(model: string): void {
+  modelCooldownUntil.set(model, Date.now() + getModelCooldownMs());
+}
+
+function clearModelRateLimit(model: string): void {
+  modelCooldownUntil.delete(model);
+}
+
 /**
  * Call OpenRouter chat completions with the given prompt. Returns the assistant
  * message content as markdown. Throws if OPENROUTER_API_KEY is missing or on
@@ -56,7 +112,50 @@ export async function complete(
     throw new Error("OPENROUTER_API_KEY is not set");
   }
 
-  const model = process.env.OPENROUTER_MODEL?.trim() || DEFAULT_MODEL;
+  const models = getModelCandidatesForAttempt();
+  let lastError: unknown;
+
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    try {
+      const content = await completeWithModel(prompt, model, apiKey, options);
+      clearModelRateLimit(model);
+      return content;
+    } catch (err) {
+      lastError = err;
+
+      if ((err as { code?: string })?.code === RATE_LIMIT_EXHAUSTED) {
+        markModelRateLimited(model);
+      }
+
+      // Don't continue on configuration/auth issues because fallback won't help.
+      if (isAuthConfigurationError(err)) {
+        throw err;
+      }
+
+      if (i < models.length - 1) {
+        logger.warn("OpenRouter model failed, falling back to next model", {
+          failedModel: model,
+          nextModel: models[i + 1],
+          error: err instanceof Error ? err.message : String(err),
+        });
+        continue;
+      }
+    }
+  }
+
+  throw new Error(
+    `OpenRouter failed for all candidate models (${models.join(", ")}). Last error: ${lastError instanceof Error ? lastError.message : String(lastError)
+    }`
+  );
+}
+
+async function completeWithModel(
+  prompt: string,
+  model: string,
+  apiKey: string,
+  options?: CompleteOptions
+): Promise<string> {
   const maxTokens = options?.maxTokens ?? 4096;
 
   const messages: Array<{ role: "system" | "user"; content: string }> = [];
@@ -94,6 +193,7 @@ export async function complete(
         if (attempt < maxRetries) {
           const delayMs = getRetryDelayMs(attempt);
           logger.warn("OpenRouter rate limited (429), retrying", {
+            model,
             attempt: attempt + 1,
             maxRetries,
             nextRetryDelayMs: delayMs,
@@ -107,11 +207,16 @@ export async function complete(
       if (!res.ok) {
         const text = await res.text();
         logger.error("OpenRouter API error", {
+          model,
           status: res.status,
           statusText: res.statusText,
           body: text.slice(0, 500),
         });
-        throw new Error(`OpenRouter request failed: ${res.status} ${res.statusText}`);
+        const err = new Error(
+          `OpenRouter request failed for model ${model}: ${res.status} ${res.statusText}`
+        ) as HttpError;
+        err.status = res.status;
+        throw err;
       }
 
       const data = (await res.json()) as {
@@ -120,6 +225,7 @@ export async function complete(
       const content = data?.choices?.[0]?.message?.content;
       if (typeof content !== "string") {
         logger.error("OpenRouter: unexpected response shape", {
+          model,
           hasChoices: Array.isArray(data?.choices),
           firstChoice: data?.choices?.[0],
         });
@@ -135,6 +241,7 @@ export async function complete(
       if (attempt < maxRetries && isRetryable(err)) {
         const delayMs = getRetryDelayMs(attempt);
         logger.warn("OpenRouter request failed, retrying", {
+          model,
           attempt: attempt + 1,
           maxRetries,
           nextRetryDelayMs: delayMs,
@@ -158,10 +265,35 @@ function sleep(ms: number): Promise<void> {
 }
 
 function isRetryable(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status && [408, 409, 425, 429, 500, 502, 503, 504].includes(status)) {
+    return true;
+  }
+
   if (err instanceof Error) {
     const m = err.message.toLowerCase();
     return m.includes("429") || m.includes("rate") || m.includes("timeout") || m.includes("econnreset") || m.includes("abort");
   }
+  return false;
+}
+
+function isAuthConfigurationError(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status && [401, 403].includes(status)) {
+    return true;
+  }
+
+  if (err instanceof Error) {
+    const m = err.message.toLowerCase();
+    return (
+      m.includes("openrouter_api_key") ||
+      m.includes("unauthorized") ||
+      m.includes("forbidden") ||
+      m.includes("401") ||
+      m.includes("403")
+    );
+  }
+
   return false;
 }
 

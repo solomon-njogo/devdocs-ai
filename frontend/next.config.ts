@@ -1,15 +1,19 @@
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
 
+// Monorepo root (parent of frontend/) — stable even when cwd differs; fixes Next.js picking
+// a lockfile under the user profile (wrong root) and reduces flaky reads on cloud-synced trees.
+const monorepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 // Load .env from project root and from current dir (so root .env or frontend/.env both work)
 const cwd = process.cwd();
-const projectRoot = cwd.endsWith("frontend") ? path.resolve(cwd, "..") : cwd;
 
 // Explicitly load root .env into process.env (loadEnvConfig(projectRoot) does not
 // populate process.env when Next runs from frontend workspace)
-const rootEnvPath = path.join(projectRoot, ".env");
+const rootEnvPath = path.join(monorepoRoot, ".env");
 try {
   if (fs.existsSync(rootEnvPath)) {
     const content = fs.readFileSync(rootEnvPath, "utf8");
@@ -29,11 +33,24 @@ try {
   }
 } catch { /* env file not found or unreadable */ }
 
-loadEnvConfig(projectRoot);
+loadEnvConfig(monorepoRoot);
 loadEnvConfig(cwd);
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingRoot: monorepoRoot,
+  // Next 16 defaults to Turbopack; an empty config acknowledges we may still define webpack() for production/build.
+  turbopack: {},
+  // If you must use `next dev --webpack` (e.g. OneDrive), polling avoids flaky native watchers on Windows.
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

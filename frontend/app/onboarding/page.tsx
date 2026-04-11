@@ -24,6 +24,16 @@ interface ReviewRepoResponse {
   summary: string;
 }
 
+interface GitHubRepoItem {
+  fullName: string;
+  name: string;
+  private: boolean;
+  description: string | null;
+}
+
+const selectLikeInput =
+  "w-full min-h-[48px] bg-bg-primary text-text-primary border border-surface-border rounded-input pl-4 pr-11 py-3 text-base focus:outline-none focus:ring-2 focus:ring-action-primary/30 focus:border-action-primary transition-all duration-[var(--duration-normal)] disabled:opacity-40 disabled:cursor-not-allowed appearance-none";
+
 function StepDots({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-2">
@@ -71,6 +81,8 @@ function StepDots({ current, total }: { current: number; total: number }) {
 const ta =
   "w-full bg-bg-primary text-text-primary border border-surface-border rounded-input px-4 py-2.5 text-base placeholder:text-text-faded focus:outline-none focus:ring-2 focus:ring-action-primary/30 focus:border-action-primary transition-all duration-[var(--duration-normal)]";
 
+import { EngagingLoader } from "@/components/EngagingLoader";
+
 const LOADING_MESSAGES = [
   "Synthesizing your vision...",
   "Architecting system overview...",
@@ -80,57 +92,12 @@ const LOADING_MESSAGES = [
   "Finalizing blueprints...",
 ];
 
-function EngagingLoader() {
-  const [msgIndex, setMsgIndex] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMsgIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
+function OnboardingLoader() {
   return (
-    <Card elevated className="p-16 flex flex-col items-center justify-center text-center space-y-10 animate-fade-in-scale min-h-[500px] overflow-hidden relative">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-1 bg-surface-border overflow-hidden">
-          <div className="h-full bg-action-primary animate-[loading-bar_4s_ease-in-out_infinite]" />
-        </div>
-      </div>
-
-      <div className="relative">
-        <div className="w-24 h-24 rounded-3xl border-2 border-action-primary/20 flex items-center justify-center animate-[spin_10s_linear_infinite]">
-          <div className="w-16 h-16 rounded-2xl bg-action-primary/10 animate-pulse flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-action-primary animate-bounce">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-            </svg>
-          </div>
-        </div>
-        <div className="absolute -inset-4 border border-action-primary/10 rounded-[2.5rem] animate-ping opacity-20" />
-      </div>
-
-      <div className="space-y-4 max-w-sm">
-        <h3 className="text-2xl font-bold tracking-tight text-white transition-all duration-700 animate-fade-in" key={msgIndex}>
-          {LOADING_MESSAGES[msgIndex]}
-        </h3>
-        <p className="text-text-muted text-sm leading-relaxed">
-          Our AI is processing your requirements to build a comprehensive documentation package tailored to your idea.
-        </p>
-      </div>
-
-      <div className="flex gap-1.5">
-        {LOADING_MESSAGES.map((_, i) => (
-          <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === msgIndex ? "w-8 bg-action-primary" : "w-2 bg-surface-border"}`} />
-        ))}
-      </div>
-
-      <style jsx>{`
-        @keyframes loading-bar {
-          0% { transform: translateX(-100%); }
-          50% { transform: translateX(0); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
-    </Card>
+    <EngagingLoader 
+      messages={LOADING_MESSAGES} 
+      title="Our AI is processing your requirements to build a comprehensive documentation package tailored to your idea." 
+    />
   );
 }
 
@@ -148,6 +115,10 @@ export default function OnboardingPage() {
 
   // Existing Repo State
   const [repoId, setRepoId] = useState("");
+  const [githubRepos, setGithubRepos] = useState<GitHubRepoItem[] | null>(null);
+  const [githubReposLoading, setGithubReposLoading] = useState(false);
+  const [githubReposLoadError, setGithubReposLoadError] = useState<string | null>(null);
+  const [manualRepoEntry, setManualRepoEntry] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +126,34 @@ export default function OnboardingPage() {
   const [repoResult, setRepoResult] = useState<ReviewRepoResponse | null>(null);
   const [connected, setConnected] = useState(false);
   const [connectingGitHub, setConnectingGitHub] = useState(false);
+
+  useEffect(() => {
+    if (!connected || status !== "existing" || step !== 2) return;
+    let cancelled = false;
+    setGithubReposLoading(true);
+    setGithubReposLoadError(null);
+    void (async () => {
+      try {
+        const data = await api<{ repos: GitHubRepoItem[] }>("/api/onboarding/github-repos");
+        if (cancelled) return;
+        setGithubRepos(data.repos);
+        if (data.repos.length === 0) setManualRepoEntry(true);
+      } catch (e) {
+        if (cancelled) return;
+        setGithubReposLoadError(e instanceof Error ? e.message : "Could not load repositories.");
+        setGithubRepos([]);
+        setManualRepoEntry(true);
+      } finally {
+        if (!cancelled) setGithubReposLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [connected, status, step]);
+
+  const githubRepoListPending =
+    connected && status === "existing" && step === 2 && githubRepos === null && !manualRepoEntry;
 
   useEffect(() => {
     const p = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -316,7 +315,7 @@ export default function OnboardingPage() {
         {status === "new_idea" && (
           <div className="animate-fade-in">
             {loading ? (
-              <EngagingLoader />
+              <OnboardingLoader />
             ) : (
               <>
                 {step === 2 && (
@@ -598,16 +597,93 @@ export default function OnboardingPage() {
                         GitHub identity verified
                       </div>
                       <div className="space-y-2">
-                        <Input
-                          label="Target Repository"
-                          required
-                          autoFocus
-                          value={repoId}
-                          onChange={(e) => setRepoId(e.target.value)}
-                          placeholder="username/repository"
-                          className="text-lg py-6"
-                          hint="Format: owner/repo (e.g. facebook/react)"
-                        />
+                        {githubReposLoading || githubRepoListPending ? (
+                          <div className="space-y-2">
+                            <span className="block text-sm font-medium text-text-secondary">Target Repository</span>
+                            <div
+                              className={`${selectLikeInput} flex items-center gap-3 text-text-muted text-sm`}
+                              aria-busy="true"
+                            >
+                              <span className="w-4 h-4 border-2 border-action-primary/30 border-t-action-primary rounded-full animate-spin shrink-0" />
+                              Loading your GitHub repositories…
+                            </div>
+                          </div>
+                        ) : manualRepoEntry || !githubRepos?.length ? (
+                          <div className="space-y-3">
+                            <Input
+                              label="Target Repository"
+                              required
+                              autoFocus
+                              value={repoId}
+                              onChange={(e) => setRepoId(e.target.value)}
+                              placeholder="owner/repository"
+                              className="text-lg py-6"
+                              hint="Format: owner/repo (e.g. acme/mobile-app)"
+                            />
+                            {githubReposLoadError && (
+                              <p className="text-sm text-semantic-error-text" role="alert">
+                                {githubReposLoadError}
+                              </p>
+                            )}
+                            {githubRepos && githubRepos.length > 0 && (
+                              <button
+                                type="button"
+                                className="text-sm font-medium text-action-primary hover:text-action-primary-hover"
+                                onClick={() => {
+                                  setManualRepoEntry(false);
+                                  setRepoId("");
+                                  setGithubReposLoadError(null);
+                                }}
+                              >
+                                Choose from your repositories instead
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <label htmlFor="onboarding-repo-select" className="block text-sm font-medium text-text-secondary">
+                              Target Repository
+                            </label>
+                            <div className="relative">
+                              <select
+                                id="onboarding-repo-select"
+                                required
+                                value={repoId}
+                                onChange={(e) => setRepoId(e.target.value)}
+                                className={`${selectLikeInput} text-lg cursor-pointer`}
+                              >
+                                <option value="">Select a repository…</option>
+                                {githubRepos.map((r) => (
+                                  <option key={r.fullName} value={r.fullName}>
+                                    {r.fullName}
+                                    {r.private ? " · private" : ""}
+                                  </option>
+                                ))}
+                              </select>
+                              <span
+                                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
+                                aria-hidden
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M6 9l6 6 6-6" />
+                                </svg>
+                              </span>
+                            </div>
+                            <p className="text-sm text-text-muted">
+                              Repositories you own, collaborate on, or access via an organization.
+                            </p>
+                            <button
+                              type="button"
+                              className="text-sm font-medium text-action-primary hover:text-action-primary-hover"
+                              onClick={() => {
+                                setManualRepoEntry(true);
+                                setRepoId("");
+                              }}
+                            >
+                              Enter owner/repo manually
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-4 pt-4 border-t border-surface-border">
                         <Button type="button" variant="ghost" onClick={() => setStep(1)}>Back</Button>

@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { UserMenu } from "@/components/UserMenu";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { getProject, createDoc, updateDoc, deleteDoc, type Project, type ProjectDoc, type ProjectDocType, type ProjectType } from "@/lib/projects";
+import { EngagingLoader, type DocStage } from "@/components/EngagingLoader";
+import { getProject, createDoc, updateDoc, deleteDoc, triggerIndex, type Project, type ProjectDoc, type ProjectDocType, type ProjectType, type CieStatus } from "@/lib/projects";
 
 function projectTypeLabel(t: ProjectType) { return t === "new_idea" ? "New idea" : "Existing repo"; }
 function docTypeLabel(t: ProjectDocType) { return t === "prd" ? "PRD" : t === "user_story" ? "User story" : "User journey"; }
@@ -18,6 +19,7 @@ const sidebarItemBase = "w-full text-left px-3 py-2 rounded-lg text-xs font-medi
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = typeof params?.id === "string" ? params.id : "";
   const [project, setProject] = useState<Project | null>(null);
   const [docs, setDocs] = useState<ProjectDoc[]>([]);
@@ -35,10 +37,30 @@ export default function ProjectDetailPage() {
   const [newDocContent, setNewDocContent] = useState("");
   const [addDocSaving, setAddDocSaving] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [indexing, setIndexing] = useState(false);
 
-  const loadProject = useCallback(async () => {
+  // Track previous status to detect pipeline completion transition
+  const prevCieStatusRef = useRef<CieStatus | undefined>(undefined);
+
+  const handleTriggerIndex = async () => {
     if (!id) return;
-    setLoading(true);
+    setIndexing(true);
+    try {
+      await triggerIndex(id);
+      await loadProject();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start indexing.");
+    } finally {
+      setIndexing(false);
+    }
+  };
+
+  const loadProject = useCallback(async (options?: { silent?: boolean }) => {
+    if (!id) return;
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const data = await getProject(id);
@@ -52,11 +74,52 @@ export default function ProjectDetailPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load project.");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [id]);
 
   useEffect(() => { loadProject(); }, [loadProject]);
+
+  // Auto-navigate to docs when pipeline transitions from generating → indexed
+  useEffect(() => {
+    const prev = prevCieStatusRef.current;
+    const curr = project?.cieStatus;
+    const wasRunning = prev === "generating" || prev === "indexing";
+    if (wasRunning && curr === "indexed" && project?.slug) {
+      router.push(`/docs/${project.slug}`);
+    }
+    prevCieStatusRef.current = curr;
+  }, [project?.cieStatus, project?.slug, router]);
+
+  useEffect(() => {
+    const isRunning = project?.cieStatus === "indexing" || project?.cieStatus === "generating";
+    if (!id || !isRunning) {
+      return;
+    }
+
+    let inFlight = false;
+    const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        await loadProject({ silent: true });
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void poll();
+    }, 4000);
+
+    void poll();
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [id, project?.cieStatus, loadProject]);
 
   const selectedDoc = docs.find(d => d.id === selectedDocId);
 
@@ -149,6 +212,53 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="h-screen bg-[#070708] text-white flex flex-col overflow-hidden">
+      {/* Loading Overlay */}
+      {(indexing || project.cieStatus === "indexing" || project.cieStatus === "generating" || addDocSaving) && (() => {
+        // Build stage list for doc generation phase
+        const docsPlanned = project.cieDocsPlanned ?? 0;
+        const docStageLabels: Record<number, string[]> = {
+          12: ["Overview","Architecture","Getting Started","Set Up Development","Write Tests","Deploy","Auth","Database","API","Environment","Modules","ADR: Frontend Framework"],
+          18: ["Overview","Architecture","Getting Started","Set Up Development","Write Tests","Deploy","Auth","Database","API","Environment","Backend Module","Components Module","Hooks Module","Lib Module","Pages Module","Migrations Module","ADR: Frontend Framework","ADR: Database Strategy"],
+        };
+        const stages: DocStage[] = docsPlanned > 0
+          ? (docStageLabels[docsPlanned] ?? Array.from({ length: docsPlanned }, (_, i) => ({ label: `Page ${i + 1} of ${docsPlanned}` })))
+              .map((l) => (typeof l === "string" ? { label: l } : l))
+          : [];
+
+        return (
+          <div className="fixed inset-0 z-[100] bg-[#070708]/90 backdrop-blur-md flex items-center justify-center p-8 animate-fade-in">
+            <div className="w-full max-w-2xl">
+              <EngagingLoader
+                title={
+                  addDocSaving
+                    ? "Generating new documentation from your request..."
+                    : project.cieStatus === "generating"
+                    ? `Writing ${docsPlanned > 0 ? docsPlanned : ""} documentation pages…`
+                    : "Analyzing codebase and indexing documents..."
+                }
+                stages={project.cieStatus === "generating" && stages.length > 0 ? stages : undefined}
+                stageIntervalMs={20000}
+                messages={
+                  addDocSaving ? [
+                    "Synthesizing your requirements...",
+                    "Architecting system overview...",
+                    "Drafting technical specifications...",
+                    "Finalizing document..."
+                  ] : [
+                    "Analyzing syntax trees...",
+                    "Extracting dependencies...",
+                    "Building vector index...",
+                    "Discovering relations...",
+                    "Synthesizing insights..."
+                  ]
+                }
+                className="bg-[#09090b] border-white/10 shadow-2xl"
+              />
+            </div>
+          </div>
+        );
+      })()}
+
       {/* High-fidelity Toolbar/Header */}
       <header className="h-14 border-b border-white/5 bg-[#070708]/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-50">
         <div className="flex items-center gap-4">
@@ -165,15 +275,55 @@ export default function ProjectDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* CIE status indicator */}
           <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/5 text-[11px] font-medium text-text-muted">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-action-success">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-            Synced with GitHub
+            <div className={`w-2 h-2 rounded-full ${
+              project.cieStatus === "indexed" ? "bg-green-500" :
+              project.cieStatus === "indexing" ? "bg-yellow-500 animate-pulse" :
+              project.cieStatus === "generating" ? "bg-blue-400 animate-pulse" :
+              project.cieStatus === "error" ? "bg-red-500" :
+              "bg-gray-500"
+            }`} />
+            {project.cieStatus === "indexed" ? "Indexed" :
+             project.cieStatus === "indexing" ? "Indexing..." :
+             project.cieStatus === "generating" ? "Generating docs..." :
+             project.cieStatus === "error" ? "Index error" :
+             "Not indexed"}
+            {project.cieChunkCount ? ` (${project.cieChunkCount} chunks)` : ""}
           </div>
-          <Button variant="primary" size="sm" className="rounded-full shadow-lg shadow-action-primary/10">
-            Push Updates
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleTriggerIndex}
+            disabled={indexing || project.cieStatus === "indexing" || project.cieStatus === "generating"}
+            className="flex items-center gap-1.5 text-[11px] font-semibold"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={indexing ? "animate-spin" : ""}
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-3" />
+            </svg>
+            {indexing ? "Starting…" : project.cieStatus === "indexing" ? "Indexing…" : project.cieStatus === "generating" ? "Generating…" : "Regenerate Docs"}
           </Button>
+
+          {project.slug && (
+            <Link href={`/docs/${project.slug}`} target="_blank">
+              <Button variant="primary" size="sm" className="rounded-full shadow-lg shadow-action-primary/10">
+                View Docs
+              </Button>
+            </Link>
+          )}
+
           <div className="h-4 w-px bg-white/10" />
           <UserMenu />
         </div>

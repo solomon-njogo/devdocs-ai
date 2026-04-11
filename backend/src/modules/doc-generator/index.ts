@@ -5,7 +5,8 @@
 
 import type { NewIdeaRequest, NewIdeaResponse, GeneratedDocItem } from "../../shared/index.js";
 import { generatePRD, generateUserStories, generateUserJourneys } from "../ai-engine/index.js";
-import { createOrUpdateFile, readFile } from "../github/index.js";
+import { readFile } from "../github/index.js";
+import { upsertDocsPage } from "../../db/index.js";
 import { logger } from "../../logger/index.js";
 
 export interface GenerateAndPushResult {
@@ -79,18 +80,7 @@ export async function reviewAndPushDocs(repoId: string, token: string): Promise<
   const userStories = await generateUserStories(codebaseSummary, contextWithPrd);
   const userJourneys = await generateUserJourneys(codebaseSummary, contextWithPrd);
 
-  const basePath = "docs";
-  const paths = [
-    `${basePath}/prd.md`,
-    `${basePath}/user-stories.md`,
-    `${basePath}/user-journeys.md`,
-  ];
-
-  await Promise.all([
-    createOrUpdateFile(repoId, paths[0], prd, token),
-    createOrUpdateFile(repoId, paths[1], userStories, token),
-    createOrUpdateFile(repoId, paths[2], userJourneys, token),
-  ]);
+  const paths = ["docs/prd.md", "docs/user-stories.md", "docs/user-journeys.md"];
 
   const docs: ReviewRepoDocItem[] = [
     { type: "prd", path: paths[0], content: prd },
@@ -102,7 +92,7 @@ export async function reviewAndPushDocs(repoId: string, token: string): Promise<
   return {
     repoId,
     paths,
-    summary: `Generated and pushed PRD, user stories, and user journeys to /${basePath}.`,
+    summary: "Generated PRD, user stories, and user journeys.",
     docs,
   };
 }
@@ -124,18 +114,9 @@ async function buildCodebaseSummary(repoId: string, token: string): Promise<stri
 export async function generateAndPushPRD(
   repoId: string,
   input: string,
-  token: string,
+  _token: string,
   path = "docs/prd.md"
 ): Promise<GenerateAndPushResult> {
   const content = await generatePRD(input, { repoId });
-
-  try {
-    await readFile(repoId, path, token);
-    // TODO: Smart merge in workflows/merge.ts
-  } catch {
-    // File may not exist yet
-  }
-
-  await createOrUpdateFile(repoId, path, content, token);
   return { path, content };
 }

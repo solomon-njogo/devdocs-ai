@@ -52,8 +52,9 @@ Prerequisites:
    - AI can generate PRDs and User Stories, create/modify files under /docs, and push updates via GitHub API.
 
 ## AI & Prompts (Overview)
-- Prompt templates live in /devdocs-ai/ai or /src/ai.
+- Prompt templates live in `backend/src/modules/ai-engine/prompts/` and `backend/src/modules/cie/generation/`.
 - OpenRouter/GPT-4 models handle: PRDs, user stories, architecture docs, API docs, and changelogs.
+- Prompt strategy uses CO-STAR plus XML-tagged boundaries (`instruction`, `context`, `objective`, `response_format`, `user_input`, `code_snippet`) to separate directives from untrusted user payloads.
 - Evaluation: ensure docs reflect code structure and commits; use code-aware prompts.
 
 ## GitHub Integration

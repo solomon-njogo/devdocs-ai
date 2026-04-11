@@ -79,3 +79,39 @@ export async function createOrUpdateFile(
     throw new Error(`GitHub createOrUpdateFile failed: ${res.status} ${text}`);
   }
 }
+
+/** Entry from the GitHub Git Trees API (recursive). */
+export interface RepoFileEntry {
+  path: string;
+  type: "blob" | "tree";
+  sha: string;
+  size: number;
+}
+
+/**
+ * Lists all files in a repository using the Git Trees API (recursive).
+ * More efficient than paginating the Contents API for full-repo walks.
+ */
+export async function listRepoFiles(
+  repoId: string,
+  token: string,
+  branch = "main"
+): Promise<RepoFileEntry[]> {
+  const res = await fetchApi(
+    `/repos/${repoId}/git/trees/${branch}?recursive=1`,
+    token
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`GitHub listRepoFiles failed: ${res.status} ${text}`);
+  }
+  const data = (await res.json()) as {
+    tree: Array<{ path: string; type: string; sha: string; size?: number }>;
+  };
+  return data.tree.map((e) => ({
+    path: e.path,
+    type: e.type as "blob" | "tree",
+    sha: e.sha,
+    size: e.size ?? 0,
+  }));
+}

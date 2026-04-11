@@ -1,13 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { UserMenu } from "@/components/UserMenu";
 import { getIntegrationStatus, type AllIntegrationsStatus, getAuthGitHubUrl } from "@/lib/api";
 
 export default function IntegrationsPage() {
-    const router = useRouter();
     const [integrations, setIntegrations] = useState<AllIntegrationsStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -26,8 +24,9 @@ export default function IntegrationsPage() {
         if (name === "GitHub") {
             try {
                 const url = await getAuthGitHubUrl();
-                window.location.href = url;
+                window.location.assign(url);
             } catch (err) {
+                console.error(err);
                 setError("Failed to start GitHub authentication.");
             }
         } else {
@@ -67,6 +66,12 @@ export default function IntegrationsPage() {
                     </div>
                 )}
 
+                {loading && (
+                    <div className="p-4 mb-6 rounded-xl border border-white/10 bg-white/[0.03] text-text-muted text-sm">
+                        Loading integrations…
+                    </div>
+                )}
+
                 <div className="grid gap-6">
                     <IntegrationCard
                         name="GitHub"
@@ -95,7 +100,7 @@ export default function IntegrationsPage() {
     );
 }
 
-function IntegrationCard({ name, description, icon, connected, onConnect }: { name: string, description: string, icon: React.ReactNode, connected: boolean, onConnect: () => void }) {
+function IntegrationCard({ name, description, icon, connected, onConnect }: { name: string, description: string, icon: ReactNode, connected: boolean, onConnect: () => void }) {
     return (
         <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-4">
