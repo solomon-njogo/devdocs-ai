@@ -20,6 +20,11 @@ export const authRoutes = Router();
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-frontend.vercel.app" : "http://localhost:3000");
 const STATE_SECRET = process.env.GITHUB_CLIENT_SECRET ?? "";
 
+function isBadVerificationCodeError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return /bad_verification_code/i.test(err.message);
+}
+
 function createState(userId: string): string {
   const nonce = crypto.randomBytes(16).toString("hex");
   const payload = `${nonce}.${userId}`;
@@ -83,6 +88,22 @@ authRoutes.get("/auth/github/callback", async (req: Request, res: Response) => {
     await setToken(userId, token);
     res.redirect(`${FRONTEND_ORIGIN}/onboarding?connected=1`);
   } catch (err) {
+    if (isBadVerificationCodeError(err)) {
+      // GitHub OAuth codes are single-use; if a duplicate callback arrives after success,
+      // treat it as connected when a token already exists for this user.
+      const state = req.query.state as string;
+      const userId = state ? parseState(state) : null;
+      if (userId) {
+        const existingToken = await getToken(userId);
+        if (existingToken) {
+          logger.warn("Auth: duplicate GitHub callback code received after successful connect", {
+            userId,
+          });
+          res.redirect(`${FRONTEND_ORIGIN}/onboarding?connected=1`);
+          return;
+        }
+      }
+    }
     logger.error("Auth: GitHub callback failed", { error: err });
     res.redirect(`${FRONTEND_ORIGIN}/onboarding?error=oauth_failed`);
   }
