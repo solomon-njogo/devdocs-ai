@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { UserMenu } from "@/components/UserMenu";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { EngagingLoader } from "@/components/EngagingLoader";
+import { EngagingLoader, type DocStage } from "@/components/EngagingLoader";
 import { getProject, createDoc, updateDoc, deleteDoc, triggerIndex, type Project, type ProjectDoc, type ProjectDocType, type ProjectType, type CieStatus } from "@/lib/projects";
 
 function projectTypeLabel(t: ProjectType) { return t === "new_idea" ? "New idea" : "Existing repo"; }
@@ -19,6 +19,7 @@ const sidebarItemBase = "w-full text-left px-3 py-2 rounded-lg text-xs font-medi
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = typeof params?.id === "string" ? params.id : "";
   const [project, setProject] = useState<Project | null>(null);
   const [docs, setDocs] = useState<ProjectDoc[]>([]);
@@ -37,6 +38,9 @@ export default function ProjectDetailPage() {
   const [addDocSaving, setAddDocSaving] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [indexing, setIndexing] = useState(false);
+
+  // Track previous status to detect pipeline completion transition
+  const prevCieStatusRef = useRef<CieStatus | undefined>(undefined);
 
   const handleTriggerIndex = async () => {
     if (!id) return;
@@ -78,8 +82,20 @@ export default function ProjectDetailPage() {
 
   useEffect(() => { loadProject(); }, [loadProject]);
 
+  // Auto-navigate to docs when pipeline transitions from generating → indexed
   useEffect(() => {
-    if (!id || project?.cieStatus !== "indexing") {
+    const prev = prevCieStatusRef.current;
+    const curr = project?.cieStatus;
+    const wasRunning = prev === "generating" || prev === "indexing";
+    if (wasRunning && curr === "indexed" && project?.slug) {
+      router.push(`/docs/${project.slug}`);
+    }
+    prevCieStatusRef.current = curr;
+  }, [project?.cieStatus, project?.slug, router]);
+
+  useEffect(() => {
+    const isRunning = project?.cieStatus === "indexing" || project?.cieStatus === "generating";
+    if (!id || !isRunning) {
       return;
     }
 
@@ -197,30 +213,51 @@ export default function ProjectDetailPage() {
   return (
     <div className="h-screen bg-[#070708] text-white flex flex-col overflow-hidden">
       {/* Loading Overlay */}
-      {(indexing || project.cieStatus === "indexing" || addDocSaving) && (
-        <div className="fixed inset-0 z-[100] bg-[#070708]/90 backdrop-blur-md flex items-center justify-center p-8 animate-fade-in">
-          <div className="w-full max-w-2xl">
-            <EngagingLoader 
-              title={addDocSaving ? "Generating new documentation from your request..." : "Analyzing codebase and indexing documents..."} 
-              messages={
-                addDocSaving ? [
-                  "Synthesizing your requirements...",
-                  "Architecting system overview...",
-                  "Drafting technical specifications...",
-                  "Finalizing document..."
-                ] : [
-                  "Analyzing syntax trees...",
-                  "Extracting dependencies...",
-                  "Building vector index...",
-                  "Discovering relations...",
-                  "Synthesizing insights..."
-                ]
-              }
-              className="bg-[#09090b] border-white/10 shadow-2xl"
-            />
+      {(indexing || project.cieStatus === "indexing" || project.cieStatus === "generating" || addDocSaving) && (() => {
+        // Build stage list for doc generation phase
+        const docsPlanned = project.cieDocsPlanned ?? 0;
+        const docStageLabels: Record<number, string[]> = {
+          12: ["Overview","Architecture","Getting Started","Set Up Development","Write Tests","Deploy","Auth","Database","API","Environment","Modules","ADR: Frontend Framework"],
+          18: ["Overview","Architecture","Getting Started","Set Up Development","Write Tests","Deploy","Auth","Database","API","Environment","Backend Module","Components Module","Hooks Module","Lib Module","Pages Module","Migrations Module","ADR: Frontend Framework","ADR: Database Strategy"],
+        };
+        const stages: DocStage[] = docsPlanned > 0
+          ? (docStageLabels[docsPlanned] ?? Array.from({ length: docsPlanned }, (_, i) => ({ label: `Page ${i + 1} of ${docsPlanned}` })))
+              .map((l) => (typeof l === "string" ? { label: l } : l))
+          : [];
+
+        return (
+          <div className="fixed inset-0 z-[100] bg-[#070708]/90 backdrop-blur-md flex items-center justify-center p-8 animate-fade-in">
+            <div className="w-full max-w-2xl">
+              <EngagingLoader
+                title={
+                  addDocSaving
+                    ? "Generating new documentation from your request..."
+                    : project.cieStatus === "generating"
+                    ? `Writing ${docsPlanned > 0 ? docsPlanned : ""} documentation pages…`
+                    : "Analyzing codebase and indexing documents..."
+                }
+                stages={project.cieStatus === "generating" && stages.length > 0 ? stages : undefined}
+                stageIntervalMs={20000}
+                messages={
+                  addDocSaving ? [
+                    "Synthesizing your requirements...",
+                    "Architecting system overview...",
+                    "Drafting technical specifications...",
+                    "Finalizing document..."
+                  ] : [
+                    "Analyzing syntax trees...",
+                    "Extracting dependencies...",
+                    "Building vector index...",
+                    "Discovering relations...",
+                    "Synthesizing insights..."
+                  ]
+                }
+                className="bg-[#09090b] border-white/10 shadow-2xl"
+              />
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* High-fidelity Toolbar/Header */}
       <header className="h-14 border-b border-white/5 bg-[#070708]/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-50">
@@ -243,11 +280,13 @@ export default function ProjectDetailPage() {
             <div className={`w-2 h-2 rounded-full ${
               project.cieStatus === "indexed" ? "bg-green-500" :
               project.cieStatus === "indexing" ? "bg-yellow-500 animate-pulse" :
+              project.cieStatus === "generating" ? "bg-blue-400 animate-pulse" :
               project.cieStatus === "error" ? "bg-red-500" :
               "bg-gray-500"
             }`} />
             {project.cieStatus === "indexed" ? "Indexed" :
              project.cieStatus === "indexing" ? "Indexing..." :
+             project.cieStatus === "generating" ? "Generating docs..." :
              project.cieStatus === "error" ? "Index error" :
              "Not indexed"}
             {project.cieChunkCount ? ` (${project.cieChunkCount} chunks)` : ""}
@@ -258,7 +297,7 @@ export default function ProjectDetailPage() {
               variant="secondary"
               size="sm"
               onClick={handleTriggerIndex}
-              disabled={indexing || project.cieStatus === "indexing"}
+              disabled={indexing || project.cieStatus === "indexing" || project.cieStatus === "generating"}
               className="text-[10px]"
             >
               {indexing ? "Starting..." : "Reindex"}

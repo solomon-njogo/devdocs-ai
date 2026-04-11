@@ -72,4 +72,4 @@ export interface FileDependency {
 }
 
 /** CIE status values stored on the project row. */
-export type CieStatus = "pending" | "indexing" | "indexed" | "error";
+export type CieStatus = "pending" | "indexing" | "generating" | "indexed" | "error";

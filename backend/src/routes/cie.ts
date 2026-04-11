@@ -8,7 +8,7 @@
 
 import { Router, Request, Response } from "express";
 import type { RequestWithUser } from "../shared/index.js";
-import { getProjectById, getRepoToken } from "../db/index.js";
+import { getProjectById, getRepoToken, updateCieStatus } from "../db/index.js";
 import { indexRepository } from "../modules/cie/index.js";
 import { planDocJobs } from "../modules/cie/generation/diataxis-router.js";
 import { finalizeGeneratedDocLinks, generateDocPage } from "../modules/cie/generation/doc-generator.js";
@@ -41,8 +41,10 @@ async function runPipelineDirect(
     errors: result.errors.length,
   });
 
+  // Transition to "generating" and record how many doc pages will be written
   const project = await getProjectById(projectId);
   const jobs = await planDocJobs(projectId);
+  await updateCieStatus(projectId, "generating", { docsPlanned: jobs.length });
   logger.info("Pipeline: generating docs", { projectId, jobCount: jobs.length });
 
   const generatedSlugs: string[] = [];
@@ -61,6 +63,9 @@ async function runPipelineDirect(
   }
 
   await finalizeGeneratedDocLinks(projectId, project?.slug ?? undefined);
+
+  // Mark fully complete — indexing + docs both done
+  await updateCieStatus(projectId, "indexed");
 
   logger.info("Pipeline: complete", {
     projectId,

@@ -35,6 +35,7 @@ type ProjectRow = {
   cie_status: string | null;
   cie_indexed_at: string | null;
   cie_chunk_count: number | null;
+  cie_docs_planned: number | null;
   cie_error: string | null;
   is_public: boolean | null;
   created_at: string;
@@ -68,6 +69,7 @@ function rowToProject(row: ProjectRow): Project {
     cieStatus: (row.cie_status as CieStatus) ?? "pending",
     cieIndexedAt: row.cie_indexed_at ?? undefined,
     cieChunkCount: row.cie_chunk_count ?? 0,
+    cieDocsPlanned: row.cie_docs_planned ?? 0,
     cieError: row.cie_error ?? undefined,
     isPublic: row.is_public ?? true,
     createdAt: row.created_at,
@@ -350,12 +352,13 @@ export async function insertProjectDoc(
 export async function updateCieStatus(
   projectId: string,
   status: CieStatus,
-  extra?: { chunkCount?: number; error?: string | null; indexedAt?: string }
+  extra?: { chunkCount?: number; docsPlanned?: number; error?: string | null; indexedAt?: string }
 ): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
   const update: Record<string, unknown> = { cie_status: status };
   if (extra?.chunkCount !== undefined) update.cie_chunk_count = extra.chunkCount;
+  if (extra?.docsPlanned !== undefined) update.cie_docs_planned = extra.docsPlanned;
   if (extra?.error !== undefined) update.cie_error = extra.error;
   if (extra?.indexedAt !== undefined) update.cie_indexed_at = extra.indexedAt;
   const { error } = await supabase.from(PROJECTS_TABLE).update(update).eq("id", projectId);

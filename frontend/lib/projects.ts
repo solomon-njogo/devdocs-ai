@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 
 export type ProjectType = "new_idea" | "existing";
 
-export type CieStatus = "pending" | "indexing" | "indexed" | "error";
+export type CieStatus = "pending" | "indexing" | "generating" | "indexed" | "error";
 
 export interface Project {
   id: string;
@@ -23,6 +23,7 @@ export interface Project {
   cieStatus?: CieStatus;
   cieIndexedAt?: string | null;
   cieChunkCount?: number;
+  cieDocsPlanned?: number;
   cieError?: string | null;
   isPublic?: boolean;
   createdAt: string;

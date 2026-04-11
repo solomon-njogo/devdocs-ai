@@ -23,6 +23,7 @@ export interface Project {
   cieStatus: CieStatus;
   cieIndexedAt?: string | null;
   cieChunkCount: number;
+  cieDocsPlanned: number;
   cieError?: string | null;
   isPublic: boolean;
   createdAt: string;
