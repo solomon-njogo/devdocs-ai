@@ -23,23 +23,27 @@ export const indexRepositoryFn = inngest.createFunction(
       token?: string;
     };
 
-    const token = (event.data as { token?: string }).token
-      ?? await step.run("resolve-token", () => getRepoToken(repoId));
+    if (repoId && repoId !== "none") {
+      const token = (event.data as { token?: string }).token
+        ?? await step.run("resolve-token", () => getRepoToken(repoId));
 
-    if (!token) {
-      logger.error("Index: no token available", { projectId, repoId });
-      return { error: "No GitHub token available for this repository." };
+      if (!token) {
+        logger.error("Index: no token available", { projectId, repoId });
+        return { error: "No GitHub token available for this repository." };
+      }
+
+      await step.run("index-repo", () =>
+        indexRepository(projectId, repoId, token, branch ?? "main")
+      );
+    } else {
+      logger.info("Index: no repoId provided, skipping indexing phase", { projectId });
     }
-
-    const result = await step.run("index-repo", () =>
-      indexRepository(projectId, repoId, token, branch ?? "main")
-    );
 
     await step.sendEvent("trigger-generate-docs", {
       name: "cie/indexed",
       data: { projectId, repoId },
     });
 
-    return result;
+    return { success: true, skippedIndexing: repoId === "none" };
   }
 );

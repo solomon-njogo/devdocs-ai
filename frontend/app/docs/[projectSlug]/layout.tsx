@@ -4,6 +4,7 @@ import { NavTree, type NavGroup } from "../_components/Sidebar";
 import { SearchModal } from "../_components/SearchModal";
 import { DocsMobileNav } from "../_components/DocsMobileNav";
 import { ThemeToggle } from "../_components/ThemeToggle";
+import { RegenerateDocsButton } from "../_components/RegenerateDocsButton";
 import Link from "next/link";
 
 const LAYER_ORDER = ["quickstart", "concept", "howto", "reference"];
@@ -96,7 +97,8 @@ export default async function DocsLayout({
           <NavTree tree={navTree} projectSlug={projectSlug} />
         </nav>
 
-        <div className="px-4 py-3 border-t border-border">
+        <div className="px-4 py-3 border-t border-border space-y-3">
+          <RegenerateDocsButton projectId={project.id} />
           <ThemeToggle />
         </div>
       </aside>

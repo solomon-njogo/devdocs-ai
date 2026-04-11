@@ -292,17 +292,29 @@ export default function ProjectDetailPage() {
             {project.cieChunkCount ? ` (${project.cieChunkCount} chunks)` : ""}
           </div>
 
-          {project.repoId && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleTriggerIndex}
-              disabled={indexing || project.cieStatus === "indexing" || project.cieStatus === "generating"}
-              className="text-[10px]"
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleTriggerIndex}
+            disabled={indexing || project.cieStatus === "indexing" || project.cieStatus === "generating"}
+            className="flex items-center gap-1.5 text-[11px] font-semibold"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={indexing ? "animate-spin" : ""}
             >
-              {indexing ? "Starting..." : "Reindex"}
-            </Button>
-          )}
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-3" />
+            </svg>
+            {indexing ? "Starting…" : project.cieStatus === "indexing" ? "Indexing…" : project.cieStatus === "generating" ? "Generating…" : "Regenerate Docs"}
+          </Button>
 
           {project.slug && (
             <Link href={`/docs/${project.slug}`} target="_blank">
