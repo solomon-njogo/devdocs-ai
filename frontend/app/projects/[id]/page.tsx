@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { UserMenu } from "@/components/UserMenu";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { EngagingLoader } from "@/components/EngagingLoader";
 import { getProject, createDoc, updateDoc, deleteDoc, triggerIndex, type Project, type ProjectDoc, type ProjectDocType, type ProjectType, type CieStatus } from "@/lib/projects";
 
 function projectTypeLabel(t: ProjectType) { return t === "new_idea" ? "New idea" : "Existing repo"; }
@@ -195,6 +196,32 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="h-screen bg-[#070708] text-white flex flex-col overflow-hidden">
+      {/* Loading Overlay */}
+      {(indexing || project.cieStatus === "indexing" || addDocSaving) && (
+        <div className="fixed inset-0 z-[100] bg-[#070708]/90 backdrop-blur-md flex items-center justify-center p-8 animate-fade-in">
+          <div className="w-full max-w-2xl">
+            <EngagingLoader 
+              title={addDocSaving ? "Generating new documentation from your request..." : "Analyzing codebase and indexing documents..."} 
+              messages={
+                addDocSaving ? [
+                  "Synthesizing your requirements...",
+                  "Architecting system overview...",
+                  "Drafting technical specifications...",
+                  "Finalizing document..."
+                ] : [
+                  "Analyzing syntax trees...",
+                  "Extracting dependencies...",
+                  "Building vector index...",
+                  "Discovering relations...",
+                  "Synthesizing insights..."
+                ]
+              }
+              className="bg-[#09090b] border-white/10 shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
       {/* High-fidelity Toolbar/Header */}
       <header className="h-14 border-b border-white/5 bg-[#070708]/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-50">
         <div className="flex items-center gap-4">

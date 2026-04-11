@@ -30,3 +30,5 @@ embedBatch(texts: string[]): Promise<number[][]>
 - All prompts live in `prompts/`
 - Provider logic in `providers/`
 - Export only via `index.ts` — no deep imports from other modules
+- Prompts use explicit CO-STAR sections and XML tags to separate system directives from user payloads
+- Dynamic user input is escaped before interpolation into XML-tagged prompt blocks

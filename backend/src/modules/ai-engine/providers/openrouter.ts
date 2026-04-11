@@ -7,14 +7,9 @@ import { logger } from "../../../logger/index.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODELS = [
-  "liquid/lfm-2.5-1.2b-thinking:free",
   "openai/gpt-oss-120b:free",
-  "google/gemma-4-31b-it:free",
+  "openai/gpt-oss-20b:free",
   "z-ai/glm-4.5-air:free",
-  "google/gemma-4-26b-a4b-it:free",
-  "arcee-ai/trinity-large-preview:free",
-  "nvidia/nemotron-3-nano-30b-a3b:free",
-  "openrouter/free",
 ];
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30_000;
@@ -150,8 +145,7 @@ export async function complete(
   }
 
   throw new Error(
-    `OpenRouter failed for all candidate models (${models.join(", ")}). Last error: ${
-      lastError instanceof Error ? lastError.message : String(lastError)
+    `OpenRouter failed for all candidate models (${models.join(", ")}). Last error: ${lastError instanceof Error ? lastError.message : String(lastError)
     }`
   );
 }

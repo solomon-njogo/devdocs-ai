@@ -4,8 +4,7 @@ import dotenv from "dotenv";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootEnv = path.resolve(__dirname, "..", "..", ".env");
-dotenv.config({ path: rootEnv });
-dotenv.config();
+dotenv.config({ path: rootEnv, processEnv: process.env });
 
 import express, { Request } from "express";
 import cookieParser from "cookie-parser";

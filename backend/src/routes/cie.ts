@@ -7,11 +7,11 @@
  */
 
 import { Router, Request, Response } from "express";
-import type { RequestWithUser, DiátaxisLayer } from "../shared/index.js";
+import type { RequestWithUser } from "../shared/index.js";
 import { getProjectById, getRepoToken } from "../db/index.js";
 import { indexRepository } from "../modules/cie/index.js";
 import { planDocJobs } from "../modules/cie/generation/diataxis-router.js";
-import { generateDocPage } from "../modules/cie/generation/doc-generator.js";
+import { finalizeGeneratedDocLinks, generateDocPage } from "../modules/cie/generation/doc-generator.js";
 import { inngest } from "../inngest/client.js";
 import { logger } from "../logger/index.js";
 
@@ -45,17 +45,13 @@ async function runPipelineDirect(
   const jobs = await planDocJobs(projectId);
   logger.info("Pipeline: generating docs", { projectId, jobCount: jobs.length });
 
-  const siblingPages = jobs.map((j) => ({
-    slug: j.slug,
-    title: j.title,
-    layer: j.layer as DiátaxisLayer,
-  }));
+  const generatedSlugs: string[] = [];
 
   for (const job of jobs) {
     try {
       job.projectSlug = project?.slug ?? undefined;
-      job.siblingPages = siblingPages;
       await generateDocPage(job);
+      generatedSlugs.push(job.slug);
     } catch (err) {
       logger.error("Pipeline: doc generation failed for page", {
         slug: job.slug,
@@ -64,7 +60,13 @@ async function runPipelineDirect(
     }
   }
 
-  logger.info("Pipeline: complete", { projectId, docsGenerated: jobs.length });
+  await finalizeGeneratedDocLinks(projectId, project?.slug ?? undefined);
+
+  logger.info("Pipeline: complete", {
+    projectId,
+    docsPlanned: jobs.length,
+    docsGenerated: generatedSlugs.length,
+  });
 }
 
 /** POST /api/projects/:id/index — trigger CIE indexing for a project. */

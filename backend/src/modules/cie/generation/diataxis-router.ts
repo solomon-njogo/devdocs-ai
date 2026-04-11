@@ -190,6 +190,49 @@ async function getMajorModules(projectId: string): Promise<MajorModule[]> {
     }));
 }
 
+interface AdrCandidate {
+  slug: string;
+  title: string;
+  sourceFiles: string[];
+  focusQuery: string;
+}
+
+/** Identify architecture decisions based on configuration files. */
+async function getAdrCandidates(projectId: string): Promise<AdrCandidate[]> {
+  const supabase = getSupabase();
+  if (!supabase) return [];
+
+  const { data: files } = await supabase
+    .from("indexed_files")
+    .select("file_path")
+    .eq("project_id", projectId);
+
+  const allPaths = (files ?? []).map((f: { file_path: string }) => f.file_path.toLowerCase());
+  const candidates: AdrCandidate[] = [];
+
+  // Frontend framework ADR (e.g. Next.js, Vite)
+  if (allPaths.some(p => p.includes('next.config') || p.includes('vite.config'))) {
+    candidates.push({
+      slug: "adr/001-frontend-framework",
+      title: "ADR: Frontend Framework",
+      sourceFiles: ["package.json", "next.config.js", "next.config.ts", "next.config.mjs", "vite.config.ts"].filter(f => allPaths.some(p => p.endsWith(f))),
+      focusQuery: "frontend framework architecture setup decision"
+    });
+  }
+
+  // Database / ORM ADR
+  if (allPaths.some(p => p.includes('prisma') || p.includes('drizzle') || p.includes('supabase'))) {
+    candidates.push({
+      slug: "adr/002-database-strategy",
+      title: "ADR: Database and ORM Strategy",
+      sourceFiles: allPaths.filter(p => p.includes('schema.prisma') || p.includes('drizzle') || p.includes('supabase')),
+      focusQuery: "database ORM schema migration data strategy decision"
+    });
+  }
+
+  return candidates;
+}
+
 /**
  * Plan all doc jobs for a freshly indexed project.
  * Returns one DocJob per document that should be generated.
@@ -273,6 +316,19 @@ export async function planDocJobs(projectId: string): Promise<DocJob[]> {
       title: `${mod.name} module`,
       sourceFiles: mod.files,
       focusQuery: `${mod.name} module what it does how it works`,
+    });
+  }
+
+  // L1 — Architecture decision records
+  const adrs = await getAdrCandidates(projectId);
+  for (const adr of adrs) {
+    jobs.push({
+      projectId,
+      layer: "adr",
+      slug: adr.slug,
+      title: adr.title,
+      sourceFiles: adr.sourceFiles,
+      focusQuery: adr.focusQuery,
     });
   }
 

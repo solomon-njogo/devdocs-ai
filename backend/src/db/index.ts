@@ -687,7 +687,8 @@ export async function deleteFileDependenciesByProject(projectId: string): Promis
 export async function ftsSearchDocs(
   projectId: string,
   query: string,
-  matchCount = 10
+  matchCount = 10,
+  minRank = 0.02
 ): Promise<DocSearchResult[]> {
   const supabase = getSupabase();
   if (!supabase) return [];
@@ -695,6 +696,7 @@ export async function ftsSearchDocs(
     p_project_id: projectId,
     p_query: query,
     p_match_count: matchCount,
+    p_min_rank: minRank,
   });
   if (error) {
     logger.error("DB: FTS search failed", { error: error.message });
@@ -707,7 +709,8 @@ export async function ftsSearchDocs(
 export async function vectorSearchDocs(
   projectId: string,
   queryEmbedding: number[],
-  matchCount = 10
+  matchCount = 10,
+  minSimilarity = 0.65
 ): Promise<DocSearchResult[]> {
   const supabase = getSupabase();
   if (!supabase) return [];
@@ -715,6 +718,7 @@ export async function vectorSearchDocs(
     p_project_id: projectId,
     p_query_embedding: queryEmbedding,
     p_match_count: matchCount,
+    p_min_similarity: minSimilarity,
   });
   if (error) {
     logger.error("DB: vector search failed", { error: error.message });
@@ -727,7 +731,8 @@ export async function vectorSearchDocs(
 export async function vectorSearchChunks(
   projectId: string,
   queryEmbedding: number[],
-  matchCount = 20
+  matchCount = 20,
+  minSimilarity = 0.72
 ): Promise<Array<{ id: string; filePath: string; content: string; similarity: number }>> {
   const supabase = getSupabase();
   if (!supabase) return [];
@@ -735,6 +740,7 @@ export async function vectorSearchChunks(
     p_project_id: projectId,
     p_query_embedding: queryEmbedding,
     p_match_count: matchCount,
+    p_min_similarity: minSimilarity,
   });
   if (error) {
     logger.error("DB: chunk vector search failed", { error: error.message });

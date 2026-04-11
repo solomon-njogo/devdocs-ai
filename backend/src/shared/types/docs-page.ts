@@ -4,7 +4,7 @@
  */
 
 /** Diátaxis documentation layer. */
-export type DiátaxisLayer = "concept" | "quickstart" | "howto" | "reference";
+export type DiátaxisLayer = "concept" | "quickstart" | "howto" | "reference" | "adr";
 
 /** A generated documentation page stored in docs_pages. */
 export interface DocsPage {
