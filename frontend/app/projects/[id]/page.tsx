@@ -50,9 +50,12 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const loadProject = useCallback(async () => {
+  const loadProject = useCallback(async (options?: { silent?: boolean }) => {
     if (!id) return;
-    setLoading(true);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const data = await getProject(id);
@@ -66,11 +69,40 @@ export default function ProjectDetailPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load project.");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [id]);
 
   useEffect(() => { loadProject(); }, [loadProject]);
+
+  useEffect(() => {
+    if (!id || project?.cieStatus !== "indexing") {
+      return;
+    }
+
+    let inFlight = false;
+    const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        await loadProject({ silent: true });
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void poll();
+    }, 4000);
+
+    void poll();
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [id, project?.cieStatus, loadProject]);
 
   const selectedDoc = docs.find(d => d.id === selectedDocId);
 
