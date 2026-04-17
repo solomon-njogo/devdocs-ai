@@ -101,6 +101,13 @@ export async function deleteDoc(projectId: string, docId: string): Promise<void>
   });
 }
 
+/** Deletes the project and related data per server rules. */
+export async function deleteProject(projectId: string): Promise<void> {
+  await api<unknown>(`/api/projects/${projectId}`, {
+    method: "DELETE",
+  });
+}
+
 /** Trigger CIE indexing for a project. */
 export async function triggerIndex(projectId: string): Promise<{ message: string }> {
   return api<{ message: string }>(`/api/projects/${projectId}/index`, {

@@ -36,8 +36,8 @@ export default function IntegrationsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#070708] text-text-primary flex flex-col">
-            <header className="sticky top-0 z-[50] border-b border-white/5 bg-[#070708]/80 backdrop-blur-xl">
+        <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+            <header className="sticky top-0 z-[50] border-b border-surface-border bg-surface-header backdrop-blur-xl">
                 <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-8">
                         <Link href="/dashboard" className="flex items-center gap-2.5">
@@ -67,7 +67,7 @@ export default function IntegrationsPage() {
                 )}
 
                 {loading && (
-                    <div className="p-4 mb-6 rounded-xl border border-white/10 bg-white/[0.03] text-text-muted text-sm">
+                    <div className="p-4 mb-6 rounded-xl border border-surface-border bg-bg-secondary text-text-muted text-sm">
                         Loading integrations…
                     </div>
                 )}
@@ -102,13 +102,13 @@ export default function IntegrationsPage() {
 
 function IntegrationCard({ name, description, icon, connected, onConnect }: { name: string, description: string, icon: ReactNode, connected: boolean, onConnect: () => void }) {
     return (
-        <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+        <div className="p-6 rounded-2xl bg-card border border-surface-border flex items-center justify-between">
             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-text-muted">
+                <div className="w-12 h-12 rounded-xl bg-bg-secondary flex items-center justify-center text-text-muted">
                     {icon}
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-white">{name}</h3>
+                    <h3 className="text-lg font-bold text-text-primary">{name}</h3>
                     <p className="text-sm text-text-muted">{description}</p>
                 </div>
             </div>

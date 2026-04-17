@@ -1,50 +1,87 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/components/theme-provider";
 
-// Module-level cache: chart text → rendered SVG string.
-// Survives remounts within the same page session.
+/** chart + resolved theme → rendered SVG (session cache). */
 const svgCache = new Map<string, string>();
 
-let mermaidInitialized = false;
+let lastMermaidTheme: "light" | "dark" | null = null;
 
-async function getMermaid() {
+async function getMermaid(resolved: "light" | "dark") {
   const m = (await import("mermaid")).default;
-  if (!mermaidInitialized) {
-    m.initialize({ startOnLoad: false, theme: "dark" });
-    mermaidInitialized = true;
+  if (lastMermaidTheme !== resolved) {
+    m.initialize({
+      startOnLoad: false,
+      theme: resolved === "dark" ? "dark" : "default",
+      /** Avoid embedding Mermaid’s built-in error SVG (“Syntax error in text”, version line). */
+      suppressErrorRendering: true,
+    });
+    lastMermaidTheme = resolved;
   }
   return m;
 }
 
+/** Some failures still return SVG text; never surface Mermaid’s internal error copy to readers. */
+function looksLikeMermaidErrorSvg(svg: string): boolean {
+  const t = svg.toLowerCase();
+  return (
+    t.includes("syntax error in text") ||
+    (t.includes("parse error") && t.includes("mermaid")) ||
+    t.includes("error in diagram")
+  );
+}
+
+function cacheKey(resolved: "light" | "dark", chart: string) {
+  return `${resolved}::${chart}`;
+}
+
 export default function MermaidDiagram({ chart }: { chart: string }) {
-  const [svgContent, setSvgContent] = useState<string>(() => svgCache.get(chart) ?? "");
+  const { resolved } = useTheme();
+  const key = cacheKey(resolved, chart);
+  const [svgContent, setSvgContent] = useState<string>(() => svgCache.get(key) ?? "");
   const chartRef = useRef(chart);
+  const resolvedRef = useRef(resolved);
 
   useEffect(() => {
     chartRef.current = chart;
+    resolvedRef.current = resolved;
 
-    // Cache hit — nothing to do.
-    if (svgCache.has(chart)) {
-      setSvgContent(svgCache.get(chart)!);
-      return;
+    const ck = cacheKey(resolved, chart);
+    let cancelled = false;
+
+    if (svgCache.has(ck)) {
+      queueMicrotask(() => {
+        if (!cancelled) setSvgContent(svgCache.get(ck)!);
+      });
+      return () => {
+        cancelled = true;
+      };
     }
 
-    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setSvgContent("");
+    });
 
     (async () => {
       try {
-        const mermaid = await getMermaid();
+        const mermaid = await getMermaid(resolved);
         const id = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
         const { svg } = await mermaid.render(id, chart);
-        if (!cancelled && chartRef.current === chart) {
-          svgCache.set(chart, svg);
+        if (looksLikeMermaidErrorSvg(svg)) {
+          throw new Error("Mermaid produced an error diagram");
+        }
+        if (
+          !cancelled &&
+          chartRef.current === chart &&
+          resolvedRef.current === resolved
+        ) {
+          svgCache.set(ck, svg);
           setSvgContent(svg);
         }
       } catch (err) {
-        console.error("Mermaid parsing error:", err);
+        console.error("Mermaid render failed", { err, chartLength: chart.length });
         if (!cancelled) {
-            // Don't cache errors — let a future mount retry.
           setSvgContent("__error__");
         }
       }
@@ -53,7 +90,7 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
     return () => {
       cancelled = true;
     };
-  }, [chart]);
+  }, [chart, resolved]);
 
   if (!svgContent) {
     return (
@@ -66,7 +103,7 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
   if (svgContent === "__error__") {
     return (
       <pre className="my-6 p-4 rounded-lg bg-surface-hover/50 border border-border text-sm overflow-x-auto text-foreground/80">
-        <code>{chart}</code>
+        <code className="font-mono whitespace-pre">{chart}</code>
       </pre>
     );
   }
