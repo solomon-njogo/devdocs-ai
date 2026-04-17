@@ -7,6 +7,7 @@ import { Router, Request, Response } from "express";
 import {
   getProjectsByUserId,
   getProjectById,
+  deleteProjectById,
   getDocsByProjectId,
   getDocById,
   insertProjectDoc,
@@ -56,6 +57,37 @@ projectRoutes.get("/projects/:id", async (req: Request, res: Response) => {
     res.status(500).json({
       code: "FETCH_FAILED",
       message: "We couldn't load the project. Please try again.",
+    });
+  }
+});
+
+projectRoutes.delete("/projects/:id", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as RequestWithUser).userId;
+    const { id } = req.params;
+    if (!userId || !id) {
+      res.status(400).json({ code: "INVALID_INPUT", message: "Project id required." });
+      return;
+    }
+    const project = await getProjectById(id, userId);
+    if (!project) {
+      res.status(404).json({ code: "NOT_FOUND", message: "Project not found." });
+      return;
+    }
+    const ok = await deleteProjectById(id, userId);
+    if (!ok) {
+      res.status(500).json({
+        code: "DELETE_FAILED",
+        message: "We couldn't delete the project. Please try again.",
+      });
+      return;
+    }
+    res.status(204).send();
+  } catch (err) {
+    logger.error("Delete project failed", { error: err });
+    res.status(500).json({
+      code: "DELETE_FAILED",
+      message: "We couldn't delete the project. Please try again.",
     });
   }
 });

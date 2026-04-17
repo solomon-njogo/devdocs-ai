@@ -193,7 +193,7 @@ export default function ProjectDetailPage() {
   };
 
   if (loading && !project) return (
-    <div className="min-h-screen bg-[#070708] flex items-center justify-center">
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center">
       <div className="flex items-center gap-3">
         <div className="w-5 h-5 border-2 border-action-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-text-muted">Loading project…</p>
@@ -202,7 +202,7 @@ export default function ProjectDetailPage() {
   );
 
   if (error && !project) return (
-    <div className="min-h-screen bg-[#070708] flex flex-col items-center justify-center gap-4 px-4">
+    <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4 px-4">
       <p className="text-red-400">{error}</p>
       <Link href="/dashboard"><Button variant="secondary">Back to Workspace</Button></Link>
     </div>
@@ -211,7 +211,7 @@ export default function ProjectDetailPage() {
   if (!project) return null;
 
   return (
-    <div className="h-screen bg-[#070708] text-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-bg-primary text-text-primary flex flex-col overflow-hidden">
       {/* Loading Overlay */}
       {(indexing || project.cieStatus === "indexing" || project.cieStatus === "generating" || addDocSaving) && (() => {
         // Build stage list for doc generation phase
@@ -226,7 +226,7 @@ export default function ProjectDetailPage() {
           : [];
 
         return (
-          <div className="fixed inset-0 z-[100] bg-[#070708]/90 backdrop-blur-md flex items-center justify-center p-8 animate-fade-in">
+          <div className="fixed inset-0 z-[100] bg-bg-primary/90 backdrop-blur-md flex items-center justify-center p-8 animate-fade-in">
             <div className="w-full max-w-2xl">
               <EngagingLoader
                 title={
@@ -252,7 +252,7 @@ export default function ProjectDetailPage() {
                     "Synthesizing insights..."
                   ]
                 }
-                className="bg-[#09090b] border-white/10 shadow-2xl"
+                className="bg-card border-surface-border shadow-2xl"
               />
             </div>
           </div>
@@ -260,14 +260,14 @@ export default function ProjectDetailPage() {
       })()}
 
       {/* High-fidelity Toolbar/Header */}
-      <header className="h-14 border-b border-white/5 bg-[#070708]/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-50">
+      <header className="h-14 border-b border-surface-border bg-surface-header backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-50">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+          <Link href="/dashboard" className="w-8 h-8 rounded-lg bg-bg-secondary flex items-center justify-center hover:bg-surface-hover transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </Link>
-          <div className="h-4 w-px bg-white/10" />
+          <div className="h-4 w-px bg-surface-border" />
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-text-faded uppercase tracking-widest">{project.name}</span>
             <div className={`w-2 h-2 rounded-full ${project.repoId ? "bg-action-success" : "bg-amber-500"} animate-pulse`} />
@@ -276,7 +276,7 @@ export default function ProjectDetailPage() {
 
         <div className="flex items-center gap-3">
           {/* CIE status indicator */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/5 text-[11px] font-medium text-text-muted">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-bg-secondary text-[11px] font-medium text-text-muted">
             <div className={`w-2 h-2 rounded-full ${
               project.cieStatus === "indexed" ? "bg-green-500" :
               project.cieStatus === "indexing" ? "bg-yellow-500 animate-pulse" :
@@ -324,19 +324,19 @@ export default function ProjectDetailPage() {
             </Link>
           )}
 
-          <div className="h-4 w-px bg-white/10" />
+          <div className="h-4 w-px bg-surface-border" />
           <UserMenu />
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Modern Sidebar Explorer */}
-        <aside className="w-72 border-r border-white/5 bg-[#09090b]/50 overflow-y-auto flex flex-col">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+        <aside className="w-72 border-r border-surface-border bg-bg-secondary/80 overflow-y-auto flex flex-col">
+          <div className="p-4 border-b border-surface-border flex items-center justify-between">
             <span className="text-[10px] font-bold text-text-faded uppercase tracking-widest">Explorer</span>
             <button
               onClick={() => setAddDocOpen(!addDocOpen)}
-              className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/5 text-text-muted hover:text-white transition-colors"
+              className="w-6 h-6 rounded flex items-center justify-center hover:bg-surface-hover text-text-muted hover:text-text-primary transition-colors"
               title="New file"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -347,10 +347,10 @@ export default function ProjectDetailPage() {
 
           <div className="flex-1 p-2 space-y-0.5">
             {addDocOpen && (
-              <div className="mb-4 bg-white/5 rounded-lg p-3 border border-white/10 animate-fade-in">
+              <div className="mb-4 bg-bg-tertiary rounded-lg p-3 border border-surface-border animate-fade-in">
                 <form onSubmit={handleAddDoc} className="space-y-3">
                   <input
-                    className="w-full bg-[#070708] border border-white/10 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-action-primary"
+                    className="w-full bg-bg-primary border border-surface-border rounded px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-action-primary"
                     placeholder="file_path.md"
                     value={newDocPath}
                     onChange={e => setNewDocPath(e.target.value)}
@@ -368,7 +368,7 @@ export default function ProjectDetailPage() {
               <button
                 key={doc.id}
                 onClick={() => setSelectedDocId(doc.id)}
-                className={`${sidebarItemBase} ${selectedDocId === doc.id ? "bg-action-primary/10 text-action-primary" : "text-text-muted hover:text-white hover:bg-white/5"}`}
+                className={`${sidebarItemBase} ${selectedDocId === doc.id ? "bg-action-primary/10 text-action-primary" : "text-text-muted hover:text-text-primary hover:bg-surface-hover"}`}
               >
                 <div className="flex items-center gap-2 truncate">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-60">
@@ -381,11 +381,11 @@ export default function ProjectDetailPage() {
             ))}
           </div>
 
-          <div className="mt-auto p-4 border-t border-white/5">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+          <div className="mt-auto p-4 border-t border-surface-border">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-secondary border border-surface-border">
               <div className="w-8 h-8 rounded-lg bg-action-primary/10 flex items-center justify-center text-action-primary text-sm font-bold">✨</div>
               <div>
-                <div className="text-[10px] font-bold text-white leading-none mb-1">AI Assistant</div>
+                <div className="text-[10px] font-bold text-text-primary leading-none mb-1">AI Assistant</div>
                 <div className="text-[9px] text-text-muted leading-none">Context active</div>
               </div>
             </div>
@@ -393,21 +393,21 @@ export default function ProjectDetailPage() {
         </aside>
 
         {/* Editor Main Content */}
-        <main className="flex-1 flex flex-col min-w-0 bg-[#070708]">
+        <main className="flex-1 flex flex-col min-w-0 bg-bg-primary">
           {!selectedDoc ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mb-6 text-2xl">📄</div>
+              <div className="w-16 h-16 rounded-3xl bg-bg-secondary flex items-center justify-center mb-6 text-2xl">📄</div>
               <h3 className="text-xl font-bold mb-2">Workspace initialized</h3>
               <p className="text-text-muted max-w-sm">Select a document from the explorer to view or edit your technical specifications.</p>
             </div>
           ) : (
             <>
               {/* Secondary Editor Tabs-like Header */}
-              <div className="h-10 border-b border-white/5 px-6 flex items-center justify-between bg-[#09090b]/30">
+              <div className="h-10 border-b border-surface-border px-6 flex items-center justify-between bg-bg-secondary/50">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold text-text-faded tracking-widest">{docTypeLabel(selectedDoc.type)}</span>
                   <span className="text-xs text-text-muted">/</span>
-                  <span className="text-xs text-white">{selectedDoc.path}</span>
+                  <span className="text-xs text-text-primary">{selectedDoc.path}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {!editing ? (
@@ -420,7 +420,7 @@ export default function ProjectDetailPage() {
                       <button onClick={handleSaveEdit} disabled={saving} className="text-[10px] font-bold uppercase text-action-primary hover:text-action-primary-hover transition-colors">
                         {saving ? "Saving..." : "Save Changes"}
                       </button>
-                      <button onClick={handleCancelEdit} className="text-[10px] font-bold uppercase text-text-muted hover:text-white transition-colors">Cancel</button>
+                      <button onClick={handleCancelEdit} className="text-[10px] font-bold uppercase text-text-muted hover:text-text-primary transition-colors">Cancel</button>
                     </>
                   )}
                 </div>
@@ -432,7 +432,7 @@ export default function ProjectDetailPage() {
                   <div className="m-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-between animate-in slide-in-from-top-4">
                     <span className="text-sm font-medium text-red-200">Delete {selectedDoc.path}? This cannot be undone.</span>
                     <div className="flex gap-4">
-                      <button onClick={() => setDeleteConfirmId(null)} className="text-xs text-white/60 hover:text-white">Cancel</button>
+                      <button onClick={() => setDeleteConfirmId(null)} className="text-xs text-text-muted hover:text-text-primary">Cancel</button>
                       <button onClick={handleDelete} className="text-xs font-bold text-red-400 hover:text-red-300">Confirm Delete</button>
                     </div>
                   </div>
@@ -448,14 +448,14 @@ export default function ProjectDetailPage() {
                         autoFocus
                       />
                     ) : (
-                      <div className="prose prose-invert prose-emerald max-w-none prose-sm sm:prose-base">
+                      <div className="prose prose-emerald dark:prose-invert max-w-none prose-sm sm:prose-base">
                         <MarkdownRenderer content={selectedDoc.content} />
                       </div>
                     )}
                   </div>
 
                   {/* Scroll hint/shadow */}
-                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#070708] to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-bg-primary to-transparent pointer-events-none" />
                 </div>
               </div>
             </>

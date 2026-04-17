@@ -755,7 +755,7 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-3xl font-extrabold tracking-tight text-white">Pipeline Activated</h3>
+                  <h3 className="text-3xl font-extrabold tracking-tight text-text-primary">Pipeline Activated</h3>
                   <p className="text-text-muted max-w-md mx-auto leading-relaxed text-sm">
                     We&apos;ve successfully connected to <strong className="text-text-primary">{repoId}</strong>. Your documentation will stay in sync automatically whenever you push new code.
                   </p>

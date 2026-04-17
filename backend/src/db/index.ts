@@ -234,6 +234,22 @@ export async function getProjectById(id: string, userId?: string): Promise<Proje
   return rowToProject(data as ProjectRow);
 }
 
+/** Delete a project owned by userId. Related rows follow DB ON DELETE rules. */
+export async function deleteProjectById(projectId: string, userId: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from(PROJECTS_TABLE)
+    .delete()
+    .eq("id", projectId)
+    .eq("user_id", userId);
+  if (error) {
+    logger.error("DB: delete project failed", { error: error.message, projectId });
+    return false;
+  }
+  return true;
+}
+
 /** Insert generated docs for a project (e.g. after onboarding). */
 export async function insertProjectDocs(
   projectId: string,

@@ -149,7 +149,7 @@ export default function LandingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden selection:bg-action-primary selection:text-white">
+        <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden selection:bg-action-primary selection:text-text-on-primary">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(howItWorksHowToJsonLd) }}
@@ -248,7 +248,7 @@ export default function LandingPage() {
                             />
                             <button
                                 type="submit"
-                                className="absolute right-1.5 top-1.5 bottom-1.5 bg-action-primary hover:bg-action-primary-hover text-white px-6 rounded-full text-sm font-medium transition-colors"
+                                className="absolute right-1.5 top-1.5 bottom-1.5 bg-action-primary hover:bg-action-primary-hover text-text-on-primary px-6 rounded-full text-sm font-medium transition-colors"
                             >
                                 Start now
                             </button>
@@ -283,27 +283,27 @@ export default function LandingPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex-1 bg-[#0f0f11] p-8 overflow-hidden relative">
+                                <div className="flex-1 bg-surface-editor p-8 overflow-hidden relative dark:bg-[#0f0f11]">
                                     <div className="max-w-3xl mx-auto">
                                         <div className="flex items-center gap-2 text-action-primary text-sm mb-4 font-mono">Guides / Getting Started</div>
-                                        <h2 className="text-3xl font-bold text-white mb-4">Quickstart Guide</h2>
-                                        <p className="text-slate-400 mb-8 leading-relaxed">Start building intelligent documentation in under five minutes. Our AI agents will scan your codebase and suggest structure.</p>
+                                        <h2 className="text-3xl font-bold text-text-primary mb-4">Quickstart Guide</h2>
+                                        <p className="text-text-muted mb-8 leading-relaxed">Start building intelligent documentation in under five minutes. Our AI agents will scan your codebase and suggest structure.</p>
                                         <div className="grid grid-cols-2 gap-4 mb-8">
-                                            <div className="p-4 rounded-xl bg-bg-tertiary border border-surface-border hover:border-action-primary/50 transition-colors group cursor-pointer text-white">
-                                                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">🚀</div>
+                                            <div className="p-4 rounded-xl bg-bg-secondary border border-surface-border hover:border-action-primary/50 transition-colors group cursor-pointer text-text-primary">
+                                                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">🚀</div>
                                                 <h3 className="font-medium mb-1">Quickstart</h3>
-                                                <p className="text-xs text-slate-500">Deploy your first docs site in minutes.</p>
+                                                <p className="text-xs text-text-faded">Deploy your first docs site in minutes.</p>
                                             </div>
-                                            <div className="p-4 rounded-xl bg-bg-tertiary border border-surface-border hover:border-action-primary/50 transition-colors group cursor-pointer text-white">
-                                                <div className="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">💻</div>
+                                            <div className="p-4 rounded-xl bg-bg-secondary border border-surface-border hover:border-action-primary/50 transition-colors group cursor-pointer text-text-primary">
+                                                <div className="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">💻</div>
                                                 <h3 className="font-medium mb-1">Installation</h3>
-                                                <p className="text-xs text-slate-500">Install the CLI to preview locally.</p>
+                                                <p className="text-xs text-text-faded">Install the CLI to preview locally.</p>
                                             </div>
                                         </div>
-                                        <div className="p-4 rounded-lg bg-bg-tertiary border border-surface-border font-mono text-xs text-slate-300">
-                                            <div className="flex justify-between items-center mb-2 border-b border-surface-border pb-2 text-slate-500">
+                                        <div className="p-4 rounded-lg bg-bg-secondary border border-surface-border font-mono text-xs text-text-secondary">
+                                            <div className="flex justify-between items-center mb-2 border-b border-surface-border pb-2 text-text-faded">
                                                 <span>Terminal</span>
-                                                <span className="cursor-pointer hover:text-white">📋</span>
+                                                <span className="cursor-pointer hover:text-text-primary">📋</span>
                                             </div>
                                             <span className="text-action-primary">$</span> npm install -g devdocs-cli<br />
                                             <span className="text-action-primary">$</span> devdocs init
@@ -313,7 +313,7 @@ export default function LandingPage() {
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-action-primary to-teal-300 flex items-center justify-center">✨</div>
                                             <div>
-                                                <div className="text-sm font-medium text-white">AI Assistant</div>
+                                                <div className="text-sm font-medium text-text-primary">AI Assistant</div>
                                                 <div className="text-xs text-action-primary">Generating update...</div>
                                             </div>
                                         </div>
@@ -448,7 +448,7 @@ export default function LandingPage() {
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-16">
                         <div className="max-w-md">
                             <div className="flex items-start gap-4">
-                                <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-action-primary to-action-primary-hover flex items-center justify-center text-white shadow-lg shadow-action-primary-glow">
+                                <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-action-primary to-action-primary-hover flex items-center justify-center text-text-on-primary shadow-lg shadow-action-primary-glow">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
