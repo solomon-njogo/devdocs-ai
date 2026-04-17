@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { UserMenu } from "@/components/UserMenu";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { EngagingLoader, type DocStage } from "@/components/EngagingLoader";
-import { getProject, createDoc, updateDoc, deleteDoc, triggerIndex, type Project, type ProjectDoc, type ProjectDocType, type ProjectType, type CieStatus } from "@/lib/projects";
+import { getProject, createDoc, updateDoc, deleteDoc, triggerIndex, type Project, type ProjectDoc, type ProjectDocType, type ProjectType } from "@/lib/projects";
 
 function projectTypeLabel(t: ProjectType) { return t === "new_idea" ? "New idea" : "Existing repo"; }
 function docTypeLabel(t: ProjectDocType) { return t === "prd" ? "PRD" : t === "user_story" ? "User story" : "User journey"; }
@@ -39,14 +39,19 @@ export default function ProjectDetailPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [indexing, setIndexing] = useState(false);
 
-  // Track previous status to detect pipeline completion transition
-  const prevCieStatusRef = useRef<CieStatus | undefined>(undefined);
+  /** True once this visit has observed `generating` — used to open public docs after the full pipeline (not the brief `indexed` after chunk store). */
+  const hasSeenGeneratingRef = useRef(false);
+
+  const expectDocsStorageKey = id ? `devdocs_expect_docs_${id}` : null;
 
   const handleTriggerIndex = async () => {
     if (!id) return;
     setIndexing(true);
     try {
       await triggerIndex(id);
+      if (typeof window !== "undefined" && expectDocsStorageKey) {
+        sessionStorage.setItem(expectDocsStorageKey, "1");
+      }
       await loadProject();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start indexing.");
@@ -82,22 +87,44 @@ export default function ProjectDetailPage() {
 
   useEffect(() => { loadProject(); }, [loadProject]);
 
-  // Auto-navigate to docs when pipeline transitions from generating → indexed
   useEffect(() => {
-    const prev = prevCieStatusRef.current;
+    hasSeenGeneratingRef.current = false;
+  }, [id]);
+
+  // After doc generation (`generating`), open published docs when status becomes `indexed`.
+  useEffect(() => {
     const curr = project?.cieStatus;
-    const wasRunning = prev === "generating" || prev === "indexing";
-    if (wasRunning && curr === "indexed" && project?.slug) {
-      router.push(`/docs/${project.slug}`);
+    const slug = project?.slug;
+    if (!slug) return;
+
+    const pendingFromIndex =
+      typeof window !== "undefined" &&
+      expectDocsStorageKey &&
+      sessionStorage.getItem(expectDocsStorageKey) === "1";
+
+    if (curr === "error") {
+      hasSeenGeneratingRef.current = false;
+      if (expectDocsStorageKey) sessionStorage.removeItem(expectDocsStorageKey);
+      return;
     }
-    prevCieStatusRef.current = curr;
-  }, [project?.cieStatus, project?.slug, router]);
+    if (curr === "generating") {
+      hasSeenGeneratingRef.current = true;
+      return;
+    }
+    if (curr === "indexed" && (hasSeenGeneratingRef.current || pendingFromIndex)) {
+      hasSeenGeneratingRef.current = false;
+      if (expectDocsStorageKey) sessionStorage.removeItem(expectDocsStorageKey);
+      router.replace(`/docs/${slug}`);
+    }
+  }, [project?.cieStatus, project?.slug, router, expectDocsStorageKey]);
 
   useEffect(() => {
     const isRunning = project?.cieStatus === "indexing" || project?.cieStatus === "generating";
     if (!id || !isRunning) {
       return;
     }
+
+    const pollMs = project?.cieStatus === "generating" ? 2000 : 4000;
 
     let inFlight = false;
     const poll = async () => {
@@ -112,7 +139,7 @@ export default function ProjectDetailPage() {
 
     const interval = window.setInterval(() => {
       void poll();
-    }, 4000);
+    }, pollMs);
 
     void poll();
 

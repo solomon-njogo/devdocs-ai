@@ -6,9 +6,9 @@
 
 import { inngest } from "../client.js";
 import { planDocJobs } from "../../modules/cie/generation/diataxis-router.js";
-import { generateDocPage } from "../../modules/cie/generation/doc-generator.js";
 import { regenerateIdeaDocs } from "../../modules/cie/generation/regenerate-idea.js";
 import { getProjectById, updateCieStatus } from "../../db/index.js";
+import { finalizeGeneratedDocLinks, generateDocPage } from "../../modules/cie/generation/doc-generator.js";
 import { logger } from "../../logger/index.js";
 import type { DiátaxisLayer } from "../../shared/index.js";
 
@@ -45,6 +45,10 @@ export const generateDocsFn = inngest.createFunction(
 
     logger.info("Generate docs: planned jobs", { projectId, jobCount: jobs.length });
 
+    await step.run("mark-generating", () =>
+      updateCieStatus(projectId, "generating", { docsPlanned: jobs.length })
+    );
+
     const siblingPages = jobs.map((j) => ({
       slug: j.slug,
       title: j.title,
@@ -57,6 +61,14 @@ export const generateDocsFn = inngest.createFunction(
       const stepId = `generate-${job.slug.replace(/\//g, "-")}`;
       await step.run(stepId, () => generateDocPage(job));
     }
+
+    await step.run("finalize-doc-links", () =>
+      finalizeGeneratedDocLinks(projectId, project.slug ?? undefined)
+    );
+
+    await step.run("mark-indexed", () => updateCieStatus(projectId, "indexed"));
+
+    logger.info("Generate docs: complete", { projectId, generated: jobs.length });
 
     return { generated: jobs.length };
   }
