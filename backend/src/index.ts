@@ -24,24 +24,41 @@ import { webhookRoutes } from "./routes/webhooks.js";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-frontend.vercel.app" : "http://localhost:3000");
-const allowedOrigins = FRONTEND_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
+const isProduction = process.env.NODE_ENV === "production";
+/** Default UI origin; always merged into CORS so empty/wrong FRONTEND_ORIGIN on Vercel cannot drop headers. */
+const defaultFrontendOrigin = isProduction
+  ? "https://devdocs-ai-frontend.vercel.app"
+  : "http://localhost:3000";
+const fromEnv = (process.env.FRONTEND_ORIGIN ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const allowedOrigins = Array.from(new Set([defaultFrontendOrigin, ...fromEnv]));
 
-// In development, also allow common network IPs (192.168.x.x, 10.x.x.x) on port 3000
-const isDev = process.env.NODE_ENV !== "production";
-const corsOrigin: cors.CorsOptions["origin"] = isDev
-  ? (origin, cb) => {
-      const allowed =
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):3000$/.test(origin);
-      cb(null, allowed ? origin || true : false);
-    }
-  : allowedOrigins.length > 1
-    ? allowedOrigins
-    : allowedOrigins[0];
+const corsOrigin: cors.CorsOptions["origin"] = (origin, cb) => {
+  if (!origin) {
+    cb(null, true);
+    return;
+  }
+  if (allowedOrigins.includes(origin)) {
+    cb(null, true);
+    return;
+  }
+  if (!isProduction && /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):3000$/.test(origin)) {
+    cb(null, true);
+    return;
+  }
+  logger.warn("CORS rejected origin", { origin });
+  cb(null, false);
+};
 
-app.use(cors({ origin: corsOrigin, credentials: true }));
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 app.use(
   express.json({
     verify: (req, _res, buf) => {

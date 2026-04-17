@@ -55,7 +55,11 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
         await sleep(RETRY_DELAY_MS * (attempt + 1));
         continue;
       }
-      throw new Error("Unable to reach the API server. Ensure the backend is running on port 4000.");
+      const hint =
+        typeof window !== "undefined" && window.location.hostname !== "localhost"
+          ? "Check that the API is deployed and that CORS allows this site."
+          : "Ensure the backend is running on port 4000.";
+      throw new Error(`Unable to reach the API server. ${hint}`);
     }
   }
 
