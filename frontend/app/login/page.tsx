@@ -20,6 +20,16 @@ function LoginContent() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
+    if (searchParams.get("mode") === "signup") {
+      setMode("signup");
+    }
+    const prefilled = searchParams.get("email")?.trim();
+    if (prefilled) {
+      setEmail(prefilled);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const supabase = createSupabaseClient();
     if (!supabase) {
       setCheckingSession(false);

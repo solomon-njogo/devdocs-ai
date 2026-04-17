@@ -14,9 +14,41 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const defaultTitle = "DevDocs AI — AI documentation for engineering teams";
+const defaultDescription =
+  "Turn GitHub repositories and product briefs into clear, structured technical documentation. Built for engineering teams—readable by your people and by the AI assistants they use every day.";
+
 export const metadata: Metadata = {
-  title: "DevDocs AI",
-  description: "AI-powered Development Documentation Assistant",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: defaultTitle,
+    template: "%s | DevDocs AI",
+  },
+  description: defaultDescription,
+  keywords: [
+    "AI documentation",
+    "technical documentation",
+    "GitHub documentation",
+    "engineering documentation",
+    "developer docs",
+    "DevDocs AI",
+  ],
+  openGraph: {
+    title: defaultTitle,
+    description: defaultDescription,
+    type: "website",
+    url: "/",
+    siteName: "DevDocs AI",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: defaultDescription,
+  },
 };
 
 /** Inline script to set .dark before paint to avoid flash. Must match ThemeProvider storage key. */

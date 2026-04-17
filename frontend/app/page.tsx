@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef, useCallback, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 
 /* ──────────────── Intersection Observer hook ──────────────── */
@@ -37,7 +38,7 @@ const features = [
             </svg>
         ),
         title: "AI-Powered Generation",
-        description: "Transform ideas and repos into comprehensive PRDs, user stories, and technical documentation in seconds.",
+        description: "Transform ideas and repos into comprehensive PRDs, user stories and technical documentation in seconds.",
     },
     {
         icon: (
@@ -88,28 +89,71 @@ const features = [
             </svg>
         ),
         title: "Fully Customizable",
-        description: "Tailor every detail—from doc structure to templates—to match your team's workflow and needs.",
+        description: "Tailor every detail from doc structure to templates to match your team's workflow and needs.",
     },
 ];
 
-/* ──────────────── How-it-works steps ──────────────── */
+/* ──────────────── How-it-works steps (also mirrored in JSON-LD HowTo below) ──────────────── */
 const steps = [
-    { num: "01", title: "Connect or Describe", desc: "Link a GitHub repo or describe your project idea in plain text." },
-    { num: "02", title: "AI Analyzes", desc: "Our AI engine analyzes your codebase or concept to understand architecture & intent." },
-    { num: "03", title: "Docs Generated", desc: "Beautiful PRDs, user stories, and technical docs are generated instantly." },
-    { num: "04", title: "Iterate & Ship", desc: "Review, refine, and share your documentation—kept always up to date." },
+    {
+        num: "01",
+        title: "Point us at GitHub or a written brief",
+        desc: "Connect a repo you already push to; we read what is on disk today. No code yet? Describe the product in your own words and we still have a starting point.",
+    },
+    {
+        num: "02",
+        title: "See how the pieces fit together",
+        desc: "We look at folders, entry files and naming so the write-up matches how your app or service is really laid out, closer to onboarding a new teammate than guessing from a blank page.",
+    },
+    {
+        num: "03",
+        title: "Get doc pages you can share tomorrow",
+        desc: "Guides, how-tos and reference-style sections land in one readable layout, fine to drop in a PR comment, Slack thread or internal wiki, then polish before anything goes public.",
+    },
+    {
+        num: "04",
+        title: "Edit when you merge, not when you panic",
+        desc: "After you ship a change, skim what moved and adjust a paragraph or two. Small follow-ups beat rewriting everything whenever your API or UI shifts.",
+    },
 ];
+
+const howItWorksHowToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How DevDocs AI creates documentation",
+    description:
+        "Connect a GitHub repository or a short written brief and turn it into structured developer documentation, clear for humans and helpful alongside AI coding assistants.",
+    step: steps.map((step, i) => ({
+        "@type": "HowToStep",
+        position: i + 1,
+        name: step.title,
+        text: step.desc,
+    })),
+};
 
 /* ════════════════ LANDING PAGE ════════════════ */
 export default function LandingPage() {
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
+    const [heroEmail, setHeroEmail] = useState("");
 
     useEffect(() => {
         Promise.resolve().then(() => setMounted(true));
     }, []);
 
+    const goToSignUpWithEmail = (e: FormEvent) => {
+        e.preventDefault();
+        const trimmed = heroEmail.trim();
+        if (!trimmed) return;
+        router.push(`/login?mode=signup&email=${encodeURIComponent(trimmed)}`);
+    };
+
     return (
         <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden selection:bg-action-primary selection:text-white">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(howItWorksHowToJsonLd) }}
+            />
             {/* ─── Ambient background effects ─── */}
             <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
                 <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-action-primary/10 to-transparent pointer-events-none" />
@@ -144,7 +188,7 @@ export default function LandingPage() {
                         <Link href="/login">
                             <Button variant="ghost" size="sm">Log in</Button>
                         </Link>
-                        <Link href="/login">
+                        <Link href="/login?mode=signup">
                             <Button variant="primary" size="sm">Get Started Free</Button>
                         </Link>
                     </div>
@@ -190,19 +234,28 @@ export default function LandingPage() {
                         className={`flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto w-full mb-16 transition-all duration-700 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                             }`}
                     >
-                        <div className="relative w-full">
+                        <form onSubmit={goToSignUpWithEmail} className="relative w-full">
                             <input
                                 className="w-full pl-5 pr-32 py-4 rounded-full border border-surface-border bg-bg-secondary text-text-primary focus:ring-2 focus:ring-action-primary focus:border-transparent shadow-sm outline-none"
                                 placeholder="Enter your work email"
                                 type="email"
+                                name="workEmail"
+                                autoComplete="email"
+                                required
+                                value={heroEmail}
+                                onChange={(e) => setHeroEmail(e.target.value)}
+                                aria-label="Work email"
                             />
-                            <button className="absolute right-1.5 top-1.5 bottom-1.5 bg-action-primary hover:bg-action-primary-hover text-white px-6 rounded-full text-sm font-medium transition-colors">
+                            <button
+                                type="submit"
+                                className="absolute right-1.5 top-1.5 bottom-1.5 bg-action-primary hover:bg-action-primary-hover text-white px-6 rounded-full text-sm font-medium transition-colors"
+                            >
                                 Start now
                             </button>
-                        </div>
+                        </form>
                     </div>
 
-                    {/* Hero visual — Mock terminal/code window */}
+                    {/* Hero visual: mock terminal/code window */}
                     <div
                         className={`mt-16 relative mx-auto max-w-5xl transition-all duration-1000 delay-500 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-10 scale-95"
                             }`}
@@ -284,7 +337,7 @@ export default function LandingPage() {
                             Built for the Intelligence Age
                         </p>
                         <p className="mt-4 max-w-2xl text-xl text-text-muted mx-auto">
-                            Integrate AI into every part of your docs lifecycle. Woven into how your knowledge is written, maintained, and understood.
+                            Integrate AI into every part of your docs lifecycle. Woven into how your knowledge is written, maintained and understood.
                         </p>
                     </div>
 
@@ -296,10 +349,36 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* ═══════ HOW IT WORKS ═══════ */}
+            <section
+                id="how-it-works"
+                className="relative z-10 scroll-mt-24 border-t border-surface-border/60 py-24 md:py-32"
+                aria-labelledby="how-it-works-heading"
+            >
+                <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                    <div className="mx-auto mb-14 max-w-3xl text-center">
+                        <p className="text-base font-semibold uppercase tracking-wide text-action-primary">How it works</p>
+                        <h2 id="how-it-works-heading" className="mt-2 text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
+                            From your repo or a short spec to docs developers will actually open
+                        </h2>
+                        <p className="mt-4 text-lg leading-relaxed text-text-muted sm:text-xl">
+                            Built for developers at every level: whether you are new to the codebase or you have shipped here for years, you should not need a second
+                            career as a tech writer. Link a GitHub repo or paste what you are building, and get structured technical docs (guides next to your README,
+                            reference material and the boring-but-important stuff) that read well for your team and play nicely with AI assistants in your editor.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+                        {steps.map((step, i) => (
+                            <StepCard key={step.num} step={step} index={i} />
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* ═══════ WORKFLOW SECTIONS ═══════ */}
             <section className="py-24 bg-bg-primary relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-                    <div className="grid lg:grid-cols-2 gap-8 mb-8">
+                    <div className="max-w-4xl mx-auto mb-8">
                         {/* Built for people and AI */}
                         <div className="bg-bg-secondary rounded-3xl p-8 border border-surface-border shadow-sm hover:shadow-md transition-shadow">
                             <div className="mb-6 inline-flex items-center justify-center p-3 bg-action-primary/10 rounded-xl text-action-primary">
@@ -307,7 +386,7 @@ export default function LandingPage() {
                             </div>
                             <h3 className="text-2xl font-bold text-text-primary mb-4">Built for both people and AI</h3>
                             <p className="text-text-muted mb-8 text-lg">
-                                Ensure your product shows up in the AI workflows users already rely on. We support llms.txt, MCP, and whatever comes next.
+                                Ensure your product shows up in the AI workflows users already rely on.
                             </p>
                             <div className="bg-bg-tertiary/40 rounded-xl p-6 border border-surface-border relative overflow-hidden min-h-[200px] flex items-center justify-center">
                                 <div className="relative w-full max-w-[280px]">
@@ -323,41 +402,6 @@ export default function LandingPage() {
                                         <div className="mt-4 flex justify-end">
                                             <div className="px-2 py-1 bg-surface-border rounded text-[10px] text-text-muted font-mono">llms.txt</div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Self-updating knowledge */}
-                        <div className="bg-bg-secondary rounded-3xl p-8 border border-surface-border shadow-sm hover:shadow-md transition-shadow">
-                            <div className="mb-6 inline-flex items-center justify-center p-3 bg-blue-100/10 rounded-xl text-blue-500">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-                            </div>
-                            <h3 className="text-2xl font-bold text-text-primary mb-4">Self-updating knowledge</h3>
-                            <p className="text-text-muted mb-8 text-lg">
-                                Draft, edit, and maintain content with a context-aware agent. Move faster and more consistently without the documentation debt.
-                            </p>
-                            <div className="bg-bg-tertiary/40 rounded-xl p-6 border border-surface-border relative overflow-hidden min-h-[200px] flex items-center justify-center">
-                                <div className="flex items-center gap-6">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-12 h-12 rounded-full bg-action-success text-white flex items-center justify-center shadow-lg shadow-action-success/20">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                        </div>
-                                        <span className="text-xs font-medium text-text-faded">Docs</span>
-                                    </div>
-                                    <div className="h-px w-8 bg-surface-border"></div>
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-12 h-12 rounded-full bg-action-primary text-white flex items-center justify-center shadow-lg shadow-action-primary/20 animate-pulse">
-                                            ✨
-                                        </div>
-                                        <span className="text-xs font-medium text-text-faded">Syncing</span>
-                                    </div>
-                                    <div className="h-px w-8 bg-surface-border"></div>
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-12 h-12 rounded-full bg-bg-tertiary text-text-faded flex items-center justify-center border-2 border-dashed border-surface-border">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                                        </div>
-                                        <span className="text-xs font-medium text-text-faded">Code</span>
                                     </div>
                                 </div>
                             </div>
@@ -380,7 +424,7 @@ export default function LandingPage() {
                             Join thousands of developers who are shipping better, faster documentation with DevDocs AI.
                         </p>
                         <div className="flex flex-wrap justify-center gap-4">
-                            <Link href="/login">
+                            <Link href="/login?mode=signup">
                                 <Button variant="primary" size="lg">
                                     Get Started for Free
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -499,7 +543,7 @@ function StepCard({ step, index }: { step: typeof steps[number]; index: number }
             <h3 className="text-lg font-semibold text-text-primary mt-2 mb-2">{step.title}</h3>
             <p className="text-sm text-text-muted leading-relaxed">{step.desc}</p>
             {/* Connector line (hidden on last) */}
-            {index < 3 && (
+            {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-1/2 -right-3 w-6 h-px bg-gradient-to-r from-action-primary/50 to-transparent" />
             )}
         </div>
