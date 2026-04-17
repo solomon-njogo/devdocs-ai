@@ -5,24 +5,6 @@ import Link from "next/link";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 
-/* ──────────────── Animated counter hook ──────────────── */
-function useCountUp(target: number, duration = 2000, start = false) {
-    const [count, setCount] = useState(0);
-    useEffect(() => {
-        if (!start) return;
-        let raf: number;
-        const t0 = performance.now();
-        const tick = (now: number) => {
-            const progress = Math.min((now - t0) / duration, 1);
-            setCount(Math.floor(progress * target));
-            if (progress < 1) raf = requestAnimationFrame(tick);
-        };
-        raf = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(raf);
-    }, [target, duration, start]);
-    return count;
-}
-
 /* ──────────────── Intersection Observer hook ──────────────── */
 function useInView(threshold = 0.15) {
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -121,10 +103,6 @@ const steps = [
 /* ════════════════ LANDING PAGE ════════════════ */
 export default function LandingPage() {
     const [mounted, setMounted] = useState(false);
-    const { setRef: statsRefCallback, inView: statsInView } = useInView(0.3);
-    const projects = useCountUp(1200, 2000, statsInView);
-    const docs = useCountUp(15000, 2500, statsInView);
-    const devs = useCountUp(3200, 2000, statsInView);
 
     useEffect(() => {
         Promise.resolve().then(() => setMounted(true));
@@ -159,7 +137,6 @@ export default function LandingPage() {
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#features" className="text-sm text-text-muted hover:text-text-primary transition-colors">Features</a>
                         <a href="#how-it-works" className="text-sm text-text-muted hover:text-text-primary transition-colors">How It Works</a>
-                        <a href="#stats" className="text-sm text-text-muted hover:text-text-primary transition-colors">Results</a>
                     </div>
 
                     {/* CTA */}
@@ -298,20 +275,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* ═══════ TRUSTED BY / STATS ═══════ */}
-            <section id="stats" ref={statsRefCallback} className="relative z-10 py-16 border-t border-b border-surface-border bg-bg-secondary/50">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <p className="text-center text-sm font-medium text-text-faded uppercase tracking-widest mb-10">TRUSTED BY INNOVATIVE ENGINEERING TEAMS</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                        {["Vercel", "Coinbase", "AWS", "Linear", "OpenAI", "Supabase"].map((logo) => (
-                            <div key={logo} className="flex items-center gap-2 text-xl font-bold text-text-primary">
-                                {logo}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* ═══════ FEATURES ═══════ */}
             <section id="features" className="relative z-10 py-24 md:py-32">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
@@ -403,108 +366,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* ═══════ ENTERPRISE REINVENTION ═══════ */}
-            <section className="py-24 bg-bg-secondary border-t border-surface-border">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-                        <div className="lg:w-1/2">
-                            <div className="text-xs font-bold text-action-primary tracking-widest uppercase mb-4">Enterprise-Reinvention</div>
-                            <h2 className="text-4xl font-bold text-text-primary mb-6">Bring intelligence to <br />enterprise knowledge</h2>
-                            <p className="text-lg text-text-muted mb-8">
-                                Modernize without the rebuild with enterprise-grade professional service & security.
-                            </p>
-                            <div className="space-y-8">
-                                <div className="flex gap-4">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-action-primary/10 flex items-center justify-center text-action-primary font-bold">🤝</div>
-                                    <div>
-                                        <h4 className="text-lg font-semibold text-text-primary mb-2">Build with partnership</h4>
-                                        <p className="text-text-muted text-sm leading-relaxed">
-                                            Direct, white-glove access to our documentation experts. Dedicated migration support and guidance tailored to your setup.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-4">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100/10 flex items-center justify-center text-blue-500 font-bold">🛡️</div>
-                                    <div>
-                                        <h4 className="text-lg font-semibold text-text-primary mb-2">Compliance and access control</h4>
-                                        <p className="text-text-muted text-sm leading-relaxed">
-                                            Compliant with SOC 2, and in the process for ISO/27001 and GDPR compliance to meet your internal requirements.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-10">
-                                <Button variant="secondary" size="lg" className="rounded-full">
-                                    Explore for enterprise
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="lg:w-1/2 w-full">
-                            <div className="relative rounded-3xl overflow-hidden shadow-2xl group h-[500px]">
-                                <img
-                                    alt="Abstract architectural landscape"
-                                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9B90wCVw3bKQj8nClIIrCapvG7e2zz7o4P-CoyvsB7ZI-WAEcSYc589l-FjPxlIIqcb-2FGZbwYPCNQrjLnjreuJDaJXt_q09t-hAiJ1YqmbxOJVpDDojSr1IoR2hsHstywST56JjZ-aP3eFWJwI1evTh9PBi8dsiQ8JdxthjD7tAM-lGiv8rZx1qt4K_x_BjyZUvFYsHwXtjPAtq3JSnEWxmlmjP9pqmeulXXuP5NQcUItzZRFkZ2PLvfDQi_Tzfn9PC8BeRaH7_"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-[#0c0c0e]/40 to-transparent opacity-90"></div>
-                                <div className="absolute bottom-0 left-0 p-8 w-full z-10">
-                                    <div className="text-xs font-bold text-action-primary mb-2 uppercase tracking-wide">Customer Story</div>
-                                    <h3 className="text-2xl font-bold text-white mb-4">See how Anthropic accelerates <br /> AI development with DevDocs</h3>
-                                    <div className="flex items-center gap-2 text-white/80 text-sm hover:text-white cursor-pointer transition-colors mb-8">
-                                        Read story <span>→</span>
-                                    </div>
-                                    <div className="flex items-end gap-12 border-t border-white/10 pt-6">
-                                        <div>
-                                            <div className="text-4xl font-bold text-white mb-1">2M+</div>
-                                            <div className="text-xs text-white/60">Monthly active developers</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-4xl font-bold text-white mb-1">3+</div>
-                                            <div className="text-xs text-white/60">Products serviced</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ═══════ CUSTOMERS ═══════ */}
-            <section className="py-24 bg-bg-primary">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-xs font-bold text-action-primary tracking-widest uppercase mb-4">Customers</h2>
-                        <h3 className="text-3xl md:text-4xl font-bold text-text-primary">Unlock knowledge for any industry</h3>
-                        <p className="mt-4 text-text-muted max-w-2xl mx-auto">From frontier AI companies to consumer brands, leaders across industries scale with DevDocs.</p>
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-6">
-                        {[
-                            { name: "Perplexity", title: "How Perplexity transformed its documentation", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCgBAe5PEPMJ6DfTFp1YNFNbVpP_XZ7DmZq4bJ7dcVnJzCVM_nCQ6EFCCC-6bRrEvsAzk_5qP062Z0YPZxfgNAgmq3uRtBHUSAWLySshzZtxZe6Ulh9OiwFD6XPghXob4k4BOgM7qYJhPyKoS6O4vERCR59VJ9PH89vTbIFrYQ9BPGPTg1Sq2KErFWYxW4dN2jcBYLPitnRg5IB_SnFMwoFQNUl0eGwJl3U8kQXKY5qoyuJWXVCR1mfV0sHB-CUDJh7Rnd-Dv7V54Ri" },
-                            { name: "X", title: "How X is using DevDocs to power the developer experience", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDE-OEudg4fyY9FWZJOt2gbNMTlag8da-WKJiI-R8StNKhEATRH0y8qH_vSyqOF6bJqzRHJOHcVDclWSkQ2Tvo5To4D3CWXKkWohCeAwkr5-H9GhyFPW-Fv0nsUNQ9jGjZ0-FsX3RmW8H11h36teXyiUkEBchNg3X8Y_upDD_8VG9QsiT3jkhmVHYe1oK-I9BNLmXfK4FYBqzYCwKJMR_2jSW0QcmBNewz2YnR0JQjTzV9Pivjkaq5YgrFZraPA0gJQfrzBK_ynakNy" },
-                            { name: "Kalshi", title: "How Kalshi helps developers drive broader prediction markets", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCBT64ANp3o2UluoechV7d525D3cma_vNk90oKfPGiLwOT_1Y6kICERPBkKEcupVLBrq03oChLNkbdk_GXhX8FmNboQbb6YbStgJiXXqsfx1eXOiR4Tlu4FfOZJjwHAUp4qgZQpiiUfjNtyywcHiW0WWHbW2RhX1i0vW0x_vKVpY47ZgpC1tryTp4dNSWQRkQX4MstrAQ_zLz5m4ZOK0no_quqVs-89uwqu_ib1P7hGG-5P-Lje6lJXxtGmeJy3XCmvQ4wWjFmWs-n9" }
-                        ].map((customer) => (
-                            <div key={customer.name} className="group cursor-pointer">
-                                <div className="rounded-2xl overflow-hidden bg-bg-tertiary aspect-video relative mb-4">
-                                    <img
-                                        alt={customer.name}
-                                        className="object-cover w-full h-full opacity-60 group-hover:scale-105 transition-transform duration-500"
-                                        src={customer.img}
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-white font-bold text-xl tracking-tight uppercase">{customer.name}</span>
-                                    </div>
-                                </div>
-                                <h4 className="text-sm font-semibold text-text-primary mb-1">{customer.title}</h4>
-                                <div className="text-xs text-text-faded flex items-center gap-1 group-hover:text-action-primary transition-colors">
-                                    Read story <span>→</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* ═══════ FINAL CTA ═══════ */}
             <section className="relative z-10 py-24 md:py-32">
                 <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
@@ -537,62 +398,66 @@ export default function LandingPage() {
             </section>
 
             {/* ═══════ FOOTER ═══════ */}
-            <footer className="bg-bg-primary border-t border-surface-border pt-16 pb-8 relative z-10">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
-                        <div className="col-span-2 lg:col-span-2">
-                            <div className="flex items-center gap-2 mb-6">
-                                <div className="w-8 h-8 rounded bg-action-primary flex items-center justify-center text-white">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <footer className="relative z-10 mt-8 border-t border-surface-border bg-gradient-to-b from-bg-secondary/40 to-bg-primary">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-action-primary/35 to-transparent" aria-hidden />
+                <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-14 pb-10">
+                    <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 lg:gap-16">
+                        <div className="max-w-md">
+                            <div className="flex items-start gap-4">
+                                <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-action-primary to-action-primary-hover flex items-center justify-center text-white shadow-lg shadow-action-primary-glow">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                    </svg>
                                 </div>
-                                <span className="font-bold text-xl tracking-tight text-text-primary">DevDocs AI</span>
+                                <div>
+                                    <span className="font-bold text-2xl tracking-tight text-text-primary block leading-tight">DevDocs AI</span>
+                                    <p className="mt-3 text-sm text-text-muted leading-relaxed">
+                                        Ship documentation that stays accurate as your product evolves. Readable by your team and by the AI tools they use every day.
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex gap-4 mb-6">
-                                <a className="text-text-faded hover:text-text-primary transition-colors" href="#">GitHub</a>
-                                <a className="text-text-faded hover:text-text-primary transition-colors" href="#">Twitter</a>
-                                <a className="text-text-faded hover:text-text-primary transition-colors" href="#">LinkedIn</a>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-8">
+                            <p className="text-xs font-medium uppercase tracking-widest text-text-faded lg:hidden">Connect</p>
+                            <div className="flex items-center gap-3">
+                                <a
+                                    href="https://github.com/solomon-njogo/devdocs-ai"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-surface-border bg-bg-secondary/80 text-text-muted transition-all hover:border-action-primary/40 hover:bg-action-primary/5 hover:text-action-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+                                    aria-label="DevDocs AI on GitHub"
+                                >
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                                    </svg>
+                                </a>
+                                <a
+                                    href="https://www.linkedin.com/in/solomon-njogo/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"   
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-surface-border bg-bg-secondary/80 text-text-muted transition-all hover:border-action-primary/40 hover:bg-action-primary/5 hover:text-action-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+                                    aria-label="DevDocs Founder on LinkedIn"
+                                >
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                                    </svg>
+                                </a>
                             </div>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Explore</h4>
-                            <ul className="space-y-3 text-sm text-text-muted">
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Startups</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Enterprise</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Pricing</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Resources</h4>
-                            <ul className="space-y-3 text-sm text-text-muted">
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Blog</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Guides</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">API Reference</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Documentation</h4>
-                            <ul className="space-y-3 text-sm text-text-muted">
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Getting Started</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Components</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Changelog</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold text-xs text-text-faded uppercase tracking-wider mb-4">Legal</h4>
-                            <ul className="space-y-3 text-sm text-text-muted">
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Privacy</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Terms</a></li>
-                                <li><a className="hover:text-action-primary transition-colors" href="#">Security</a></li>
-                            </ul>
                         </div>
                     </div>
-                    <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-surface-border gap-4">
-                        <div className="flex items-center gap-2 px-3 py-1 rounded bg-action-success/10 text-action-success text-xs font-medium">
-                            <div className="w-2 h-2 rounded-full bg-action-success animate-pulse"></div>
-                            All systems normal
-                        </div>
-                        <div className="text-xs text-text-faded">
-                            © {new Date().getFullYear()} DevDocs AI, Inc.
+                    <div className="mt-12 flex flex-col-reverse gap-6 border-t border-surface-border pt-8 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <p className="text-center text-xs text-text-faded sm:text-left">
+                            © {new Date().getFullYear()} DevDocs AI Inc. All rights reserved.
+                        </p>
+                        <div className="flex justify-center sm:justify-end">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-action-success/20 bg-action-success/10 px-3.5 py-1.5 text-xs font-medium text-action-success">
+                                <span className="relative flex h-2 w-2 shrink-0">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-action-success opacity-60" />
+                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-action-success" />
+                                </span>
+                                All systems normal
+                            </div>
                         </div>
                     </div>
                 </div>
