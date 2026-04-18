@@ -7,9 +7,8 @@ import { logger } from "../../../logger/index.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODELS = [
-  "openai/gpt-oss-120b:free",
-  "openai/gpt-oss-20b:free",
-  "z-ai/glm-4.5-air:free",
+  "google/gemini-2.0-flash-001",
+  "openai/gpt-oss-120b",
 ];
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30_000;
