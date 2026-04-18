@@ -12,11 +12,31 @@ const DEFAULT_IGNORE_PATTERNS = [
   "dist/",
   "build/",
   ".next/",
+  ".turbo/",
+  ".cache/",
+  ".vercel/",
+  ".parcel-cache/",
+  ".svelte-kit/",
+  ".nuxt/",
+  ".output/",
+  ".expo/",
+  "out/",
+  "coverage/",
   "__pycache__/",
+  "__snapshots__/",
+  "fixtures/",
+  "test-fixtures/",
+  "__fixtures__/",
+  "__mocks__/",
+  "storybook-static/",
+  "vendor/",
+  "public/",
   "*.min.js",
   "*.min.css",
   "*.map",
   "*.lock",
+  "*.generated.*",
+  "*.d.ts",
   "package-lock.json",
   "yarn.lock",
   "pnpm-lock.yaml",
@@ -28,15 +48,22 @@ const DEFAULT_IGNORE_PATTERNS = [
   "*.gif",
   "*.svg",
   "*.ico",
+  "*.webp",
+  "*.avif",
+  "*.bmp",
   "*.woff",
   "*.woff2",
   "*.ttf",
   "*.eot",
+  "*.otf",
   "*.mp4",
   "*.webm",
+  "*.mp3",
+  "*.wav",
   "*.pdf",
   "*.zip",
   "*.tar.gz",
+  "*.gz",
 ];
 
 const MAX_FILE_SIZE = 100_000; // 100 KB — skip very large files
@@ -87,13 +114,19 @@ function detectLanguage(filePath: string): string | null {
   return ext ? map[ext] ?? null : null;
 }
 
+function globToRegex(pattern: string): RegExp {
+  // Escape regex specials except '*', then replace '*' with '[^/]*'.
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*");
+  return new RegExp(`(^|/)${escaped}$`);
+}
+
 function shouldIgnore(path: string): boolean {
   return DEFAULT_IGNORE_PATTERNS.some((pattern) => {
     if (pattern.endsWith("/")) {
       return path.includes(pattern) || path.startsWith(pattern);
     }
-    if (pattern.startsWith("*.")) {
-      return path.endsWith(pattern.slice(1));
+    if (pattern.includes("*")) {
+      return globToRegex(pattern).test(path);
     }
     return path === pattern || path.endsWith(`/${pattern}`);
   });
