@@ -98,7 +98,14 @@ async function runPipelineDirect(
     }
   }
 
-  await finalizeGeneratedDocLinks(projectId, project.slug ?? undefined);
+  try {
+    await finalizeGeneratedDocLinks(projectId, project.slug ?? undefined);
+  } catch (err) {
+    logger.error("Pipeline: doc link finalization failed", {
+      projectId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // Mark fully complete — indexing + docs both done
   await updateCieStatus(projectId, "indexed");

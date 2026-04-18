@@ -7,12 +7,11 @@ const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 const SCOPES = ["repo", "read:user"].join(" ");
 
-/** True when Client ID, secret, and callback URL are all non-empty (whitespace-trimmed). */
+/** True when Client ID and secret are set (callback URL is auto-detected). */
 export function isGitHubOAuthConfigured(): boolean {
   const id = process.env.GITHUB_CLIENT_ID?.trim();
   const secret = process.env.GITHUB_CLIENT_SECRET?.trim();
-  const callback = process.env.GITHUB_CALLBACK_URL?.trim();
-  return Boolean(id && secret && callback);
+  return Boolean(id && secret);
 }
 
 /**
@@ -75,9 +74,15 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
 }
 
 function getCallbackUrl(): string {
-  const url = process.env.GITHUB_CALLBACK_URL;
-  if (!url) {
-    throw new Error("GITHUB_CALLBACK_URL is not set");
+  // Use explicit env var if set
+  if (process.env.GITHUB_CALLBACK_URL?.trim()) {
+    return process.env.GITHUB_CALLBACK_URL.trim();
   }
-  return url;
+  
+  // Otherwise, auto-detect based on environment
+  const isDev = process.env.NODE_ENV !== "production";
+  if (isDev) {
+    return "http://localhost:4000/api/auth/github/callback";
+  }
+  return "https://devdocs-ai-backend.vercel.app/api/auth/github/callback";
 }

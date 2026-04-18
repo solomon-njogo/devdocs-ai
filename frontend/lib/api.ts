@@ -4,7 +4,18 @@
 
 import { createSupabaseClient } from "@/lib/supabase";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? (process.env.NODE_ENV === "production" ? "https://devdocs-ai-backend.vercel.app" : "http://localhost:4000");
+// Use environment variable or detect based on hostname
+const API_BASE = (() => {
+  if (process.env.NEXT_PUBLIC_API_BASE) {
+    return process.env.NEXT_PUBLIC_API_BASE;
+  }
+  // In production (Vercel and similar), use the backend URL
+  // In development (localhost), use localhost:4000
+  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+    return "http://localhost:4000";
+  }
+  return "https://devdocs-ai-backend.vercel.app";
+})();
 const MAX_NETWORK_RETRIES = 2;
 const RETRY_DELAY_MS = 300;
 

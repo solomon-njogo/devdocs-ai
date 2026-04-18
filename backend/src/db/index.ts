@@ -17,6 +17,7 @@ import { getSupabase } from "./client.js";
 const REPO_META_TABLE = "repo_meta";
 const PROJECTS_TABLE = "projects";
 const PROJECT_DOCS_TABLE = "project_docs";
+const USERS_PROFILE_TABLE = "users_profile";
 
 type ProjectRow = {
   id: string;
@@ -154,6 +155,55 @@ export async function getRepoToken(repoId: string): Promise<string | null> {
   if (!supabase) return null;
   const { data } = await supabase.from("repo_tokens").select("token").eq("repo_id", repoId).maybeSingle();
   return (data as { token: string } | null)?.token ?? null;
+}
+
+/** Persist a GitHub token for a user so OAuth survives Vercel serverless instances. */
+export async function setUserGithubToken(userId: string, token: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from(USERS_PROFILE_TABLE)
+    .upsert(
+      {
+        user_id: userId,
+        github_token: token,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
+    );
+  if (error) {
+    logger.error("DB: set user github token failed", { error: error.message, userId });
+    return false;
+  }
+  return true;
+}
+
+/** Read the persisted GitHub token for a user. */
+export async function getUserGithubToken(userId: string): Promise<string | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from(USERS_PROFILE_TABLE)
+    .select("github_token")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return (data as { github_token: string | null }).github_token ?? null;
+}
+
+/** Clear the persisted GitHub token for a user. */
+export async function deleteUserGithubToken(userId: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from(USERS_PROFILE_TABLE)
+    .update({ github_token: null, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+  if (error) {
+    logger.error("DB: delete user github token failed", { error: error.message, userId });
+    return false;
+  }
+  return true;
 }
 
 /** Create a project; returns the created project with id from DB. Requires userId for ownership. */

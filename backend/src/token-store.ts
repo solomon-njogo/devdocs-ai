@@ -1,19 +1,29 @@
 /**
- * In-memory store for GitHub OAuth tokens keyed by user id.
- * Used by auth callback and authenticated routes. Survives per-user; consider DB for production.
+ * GitHub OAuth token storage.
+ * Uses Supabase for persistence when available, with an in-memory fallback for local dev.
  */
+
+import { deleteUserGithubToken, getUserGithubToken, setUserGithubToken } from "./db/index.js";
 
 const store = new Map<string, { token: string }>();
 
-export function setToken(userId: string, token: string): void {
-  store.set(userId, { token });
+export async function setToken(userId: string, token: string): Promise<void> {
+  const persisted = await setUserGithubToken(userId, token);
+  if (!persisted) {
+    store.set(userId, { token });
+  }
 }
 
-export function getToken(userId: string): string | null {
+export async function getToken(userId: string): Promise<string | null> {
+  const persisted = await getUserGithubToken(userId);
+  if (persisted) return persisted;
   const entry = store.get(userId);
   return entry?.token ?? null;
 }
 
-export function deleteToken(userId: string): void {
-  store.delete(userId);
+export async function deleteToken(userId: string): Promise<void> {
+  const persisted = await deleteUserGithubToken(userId);
+  if (!persisted) {
+    store.delete(userId);
+  }
 }

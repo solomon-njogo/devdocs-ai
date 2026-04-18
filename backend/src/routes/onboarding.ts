@@ -26,7 +26,7 @@ onboardingRoutes.get("/onboarding/github-repos", async (req: Request, res: Respo
       res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
       return;
     }
-    const token = getTokenFromRequest(req);
+    const token = await getTokenFromRequest(req);
     if (!token) {
       res.status(401).json({
         code: "UNAUTHORIZED",
@@ -119,7 +119,7 @@ onboardingRoutes.post("/onboarding/review-repo", async (req: Request, res: Respo
       res.status(401).json({ code: "UNAUTHORIZED", message: "Please sign in to continue." });
       return;
     }
-    const token = getTokenFromRequest(req) ?? req.headers.authorization?.replace("Bearer ", "") ?? "";
+    const token = (await getTokenFromRequest(req)) ?? req.headers.authorization?.replace("Bearer ", "") ?? "";
     if (!token) {
       res.status(401).json({
         code: "UNAUTHORIZED",

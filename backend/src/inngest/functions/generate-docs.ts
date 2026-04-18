@@ -10,6 +10,7 @@ import { finalizeGeneratedDocLinks, generateDocPage } from "../../modules/cie/ge
 import { regenerateIdeaDocs } from "../../modules/cie/generation/regenerate-idea.js";
 import { runWithConcurrency } from "../../modules/cie/generation/concurrency.js";
 import { getProjectById, updateCieStatus } from "../../db/index.js";
+import { finalizeGeneratedDocLinks, generateDocPage } from "../../modules/cie/generation/doc-generator.js";
 import { logger } from "../../logger/index.js";
 import type { DiátaxisLayer } from "../../shared/index.js";
 

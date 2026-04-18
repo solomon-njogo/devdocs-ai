@@ -100,14 +100,30 @@ export interface TransportConfig {
   logFile?: string;
 }
 
+function isLikelyWritableOnVercel(filePath: string): boolean {
+  if (!process.env.VERCEL) return true;
+  const normalized = path.resolve(filePath).replace(/\\/g, "/");
+  return normalized.startsWith("/tmp/") || normalized === "/tmp";
+}
+
 /**
  * Create a transport function that writes to console and optionally to a file.
  * Only writes if entry level is <= config.level.
  */
 export function createTransports(config: TransportConfig): (entry: LogEntry) => void {
   const minNum = LEVEL_NUM[config.level];
-  const filePath =
+  const configuredFilePath =
     config.logFile ?? (config.logDir ? path.join(config.logDir, "devdocs.log") : undefined);
+  const filePath =
+    configuredFilePath && isLikelyWritableOnVercel(configuredFilePath)
+      ? configuredFilePath
+      : undefined;
+
+  if (configuredFilePath && !filePath) {
+    process.stderr.write(
+      `[logger] Skipping file logging on Vercel for non-writable path: ${configuredFilePath}. Use /tmp or rely on console logs.\n`
+    );
+  }
 
   return (entry: LogEntry) => {
     if (LEVEL_NUM[entry.level] > minNum) return;

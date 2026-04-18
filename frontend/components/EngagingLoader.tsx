@@ -139,18 +139,24 @@ function StagesLoader({
   stageIntervalMs?: number;
   className?: string;
 }) {
+  /** Index of the in-progress row, or `stages.length` when every row is done. */
   const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
-    if (activeIdx >= stages.length - 1) return;
+    setActiveIdx(0);
+  }, [stages.length]);
+
+  useEffect(() => {
+    if (activeIdx >= stages.length) return;
     const t = setTimeout(
-      () => setActiveIdx((p) => Math.min(p + 1, stages.length - 1)),
+      () => setActiveIdx((p) => Math.min(p + 1, stages.length)),
       stageIntervalMs
     );
     return () => clearTimeout(t);
   }, [activeIdx, stages.length, stageIntervalMs]);
 
-  const pct = Math.round(((activeIdx + 1) / stages.length) * 100);
+  const complete = activeIdx >= stages.length;
+  const pct = complete ? 100 : Math.round(((activeIdx + 1) / stages.length) * 100);
 
   return (
     <Card
@@ -183,8 +189,8 @@ function StagesLoader({
       {/* Stage checklist */}
       <div className="flex-1 space-y-2 overflow-hidden">
         {stages.map((stage, i) => {
-          const done = i < activeIdx;
-          const active = i === activeIdx;
+          const done = complete || i < activeIdx;
+          const active = !complete && i === activeIdx;
           return (
             <div
               key={i}
@@ -247,7 +253,7 @@ function StagesLoader({
       <div className="flex items-center justify-between text-xs text-text-muted border-t border-white/5 pt-4">
         <span>{pct}% complete</span>
         <span>
-          {activeIdx + 1} / {stages.length} pages
+          {complete ? stages.length : activeIdx + 1} / {stages.length} pages
         </span>
       </div>
     </Card>
