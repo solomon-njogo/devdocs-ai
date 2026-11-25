@@ -4,10 +4,11 @@
  * calls the LLM, embeds the result, and upserts to docs_pages.
  */
 
+import { createHash } from "node:crypto";
 import type { DocJob } from "../../../shared/index.js";
 import { complete, embed } from "../../ai-engine/index.js";
 import { assembleContext } from "../retrieval/context-assembler.js";
-import { getDocsPagesByProject, upsertDocsPage } from "../../../db/index.js";
+import { getDocsPageBySlug, getDocsPagesByProject, upsertDocsPage } from "../../../db/index.js";
 import { LAYER_RULES, OUTPUT_LANGUAGE_ENGLISH_ONLY, UNIVERSAL_DOC_STANDARDS, xmlEscape, xmlTag } from "./prompt-templates.js";
 import { logger } from "../../../logger/index.js";
 import {
@@ -19,6 +20,24 @@ import {
 
 const STRICT_QUALITY_GATE = process.env.DOC_QUALITY_GATE_STRICT === "true";
 const REQUIRE_EVIDENCE_MARKERS = process.env.DOC_REQUIRE_EVIDENCE_MARKERS !== "false";
+const DOC_FORCE_REGEN = process.env.DOC_FORCE_REGEN === "true";
+
+/**
+ * Deterministic source SHA: captures the job slug + focus query + assembled
+ * context. Two runs against the same indexed state produce the same hash,
+ * so when it matches `docs_pages.source_sha` we can skip the LLM call.
+ */
+function computeSourceSha(job: DocJob, contextPrompt: string): string {
+  return createHash("sha256")
+    .update(job.slug)
+    .update("\0")
+    .update(job.layer)
+    .update("\0")
+    .update(job.focusQuery ?? "")
+    .update("\0")
+    .update(contextPrompt)
+    .digest("hex");
+}
 
 function buildLinkInstruction(job: DocJob): string {
   return [
@@ -34,6 +53,23 @@ function buildLinkInstruction(job: DocJob): string {
  */
 export async function generateDocPage(job: DocJob): Promise<void> {
   const ctx = await assembleContext(job.projectId, job.focusQuery);
+
+  // Skip the LLM call entirely when nothing that feeds this page has changed
+  // since the last successful generation. The composite source SHA covers the
+  // job identity plus the assembled codebase context, so a stable hash means
+  // a stable output.
+  const sourceSha = computeSourceSha(job, ctx.prompt);
+  if (!DOC_FORCE_REGEN) {
+    const existing = await getDocsPageBySlug(job.projectId, job.slug);
+    if (existing && existing.sourceSha === sourceSha && existing.content?.trim().length) {
+      logger.info("Doc page unchanged; skipping regeneration", {
+        projectId: job.projectId,
+        slug: job.slug,
+        sourceSha: sourceSha.slice(0, 12),
+      });
+      return;
+    }
+  }
 
   const linkInstruction = buildLinkInstruction(job);
   const groundingInstruction = [
@@ -121,6 +157,7 @@ export async function generateDocPage(job: DocJob): Promise<void> {
     layer: job.layer,
     isAuto: true,
     sourceFiles: job.sourceFiles,
+    sourceSha,
     embedding: docEmbedding,
   });
 

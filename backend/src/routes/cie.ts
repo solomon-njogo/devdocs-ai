@@ -13,6 +13,7 @@ import { indexRepository } from "../modules/cie/index.js";
 import { planDocJobs } from "../modules/cie/generation/diataxis-router.js";
 import { finalizeGeneratedDocLinks, generateDocPage } from "../modules/cie/generation/doc-generator.js";
 import { regenerateIdeaDocs } from "../modules/cie/generation/regenerate-idea.js";
+import { runWithConcurrency } from "../modules/cie/generation/concurrency.js";
 import { inngest } from "../inngest/client.js";
 import { logger } from "../logger/index.js";
 
@@ -40,7 +41,11 @@ async function runPipelineDirect(
     logger.info("Pipeline: indexing complete", {
       projectId,
       filesIndexed: result.filesIndexed,
+      filesSkipped: result.filesSkipped,
+      filesRemoved: result.filesRemoved,
       chunks: result.chunksStored,
+      chunksReused: result.chunksReused,
+      chunksEmbedded: result.chunksEmbedded,
       errors: result.errors.length,
     });
   } else {
@@ -63,17 +68,32 @@ async function runPipelineDirect(
   await updateCieStatus(projectId, "generating", { docsPlanned: jobs.length });
   logger.info("Pipeline: generating docs", { projectId, jobCount: jobs.length });
 
-  const generatedSlugs: string[] = [];
+  const siblingPages = jobs.map((j) => ({
+    slug: j.slug,
+    title: j.title,
+    layer: j.layer,
+  }));
 
   for (const job of jobs) {
-    try {
-      job.projectSlug = project.slug ?? undefined;
-      await generateDocPage(job);
-      generatedSlugs.push(job.slug);
-    } catch (err) {
+    job.projectSlug = project.slug ?? undefined;
+    job.siblingPages = siblingPages;
+  }
+
+  const docConcurrency = Math.max(1, Number(process.env.DOC_GEN_CONCURRENCY ?? 3));
+  const results = await runWithConcurrency(jobs, docConcurrency, async (job) => {
+    await generateDocPage(job);
+    return job.slug;
+  });
+
+  const generatedSlugs: string[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.ok) {
+      generatedSlugs.push(r.value);
+    } else {
       logger.error("Pipeline: doc generation failed for page", {
-        slug: job.slug,
-        error: err instanceof Error ? err.message : String(err),
+        slug: jobs[i].slug,
+        error: r.error instanceof Error ? r.error.message : String(r.error),
       });
     }
   }

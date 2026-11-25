@@ -618,6 +618,87 @@ export async function deleteIndexedFilesByProject(projectId: string): Promise<vo
   await supabase.from("indexed_files").delete().eq("project_id", projectId);
 }
 
+/**
+ * Load the existing (file_path → file_sha) map for a project. Used by the
+ * indexer to skip files whose GitHub blob SHA has not changed since the last
+ * run.
+ */
+export async function getIndexedFileShas(projectId: string): Promise<Map<string, string>> {
+  const supabase = getSupabase();
+  if (!supabase) return new Map();
+  const { data, error } = await supabase
+    .from("indexed_files")
+    .select("file_path,file_sha")
+    .eq("project_id", projectId);
+  if (error) {
+    logger.error("DB: load indexed_file shas failed", { error: error.message, projectId });
+    return new Map();
+  }
+  const out = new Map<string, string>();
+  for (const row of (data ?? []) as Array<{ file_path: string; file_sha: string | null }>) {
+    if (row.file_sha) out.set(row.file_path, row.file_sha);
+  }
+  return out;
+}
+
+/**
+ * Remove indexed_files / code_chunks / symbols / file_dependencies rows for
+ * paths that no longer exist in the repo tree. `keepPaths` is the set of paths
+ * present in the current walk; anything else is pruned.
+ */
+export async function deleteRemovedFiles(
+  projectId: string,
+  keepPaths: readonly string[]
+): Promise<number> {
+  const supabase = getSupabase();
+  if (!supabase) return 0;
+
+  const keepSet = new Set(keepPaths);
+  const { data: existing, error } = await supabase
+    .from("indexed_files")
+    .select("id,file_path")
+    .eq("project_id", projectId);
+  if (error) {
+    logger.error("DB: load indexed_files for pruning failed", { error: error.message, projectId });
+    return 0;
+  }
+
+  const toRemove = (existing ?? []).filter(
+    (r: { file_path: string }) => !keepSet.has(r.file_path)
+  ) as Array<{ id: string; file_path: string }>;
+  if (toRemove.length === 0) return 0;
+
+  const removedIds = toRemove.map((r) => r.id);
+  const removedPaths = toRemove.map((r) => r.file_path);
+
+  await supabase
+    .from("code_chunks")
+    .delete()
+    .eq("project_id", projectId)
+    .in("file_id", removedIds);
+
+  await supabase
+    .from("symbols")
+    .delete()
+    .eq("project_id", projectId)
+    .in("file_path", removedPaths);
+
+  await supabase
+    .from("file_dependencies")
+    .delete()
+    .eq("project_id", projectId)
+    .in("from_file", removedPaths);
+
+  await supabase
+    .from("indexed_files")
+    .delete()
+    .eq("project_id", projectId)
+    .in("id", removedIds);
+
+  logger.info("DB: pruned removed files", { projectId, removed: toRemove.length });
+  return toRemove.length;
+}
+
 // ── CIE: code chunks ───────────────────────────────────────
 
 /** Bulk-insert code chunks for a file. Deletes existing chunks for the file first. */
@@ -670,6 +751,68 @@ export async function deleteChunksByProject(projectId: string): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
   await supabase.from("code_chunks").delete().eq("project_id", projectId);
+}
+
+/** Count all code chunks for a project. */
+export async function countChunksByProject(projectId: string): Promise<number> {
+  const supabase = getSupabase();
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from("code_chunks")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", projectId);
+  if (error) {
+    logger.error("DB: count chunks failed", { error: error.message, projectId });
+    return 0;
+  }
+  return count ?? 0;
+}
+
+/**
+ * Return existing content_hash → embedding map for a file. Lets the indexer
+ * reuse previously computed embeddings for unchanged chunks within a changed
+ * file (saves API cost when a file changes but most of its chunks didn't).
+ */
+export async function getChunkEmbeddingsByHash(
+  fileId: string
+): Promise<Map<string, number[]>> {
+  const supabase = getSupabase();
+  if (!supabase) return new Map();
+  const { data, error } = await supabase
+    .from("code_chunks")
+    .select("content_hash,embedding")
+    .eq("file_id", fileId);
+  if (error) {
+    logger.error("DB: load chunk hashes failed", { error: error.message, fileId });
+    return new Map();
+  }
+  const out = new Map<string, number[]>();
+  for (const row of (data ?? []) as Array<{ content_hash: string | null; embedding: number[] | null }>) {
+    if (row.content_hash && Array.isArray(row.embedding) && row.embedding.length > 0) {
+      out.set(row.content_hash, row.embedding);
+    }
+  }
+  return out;
+}
+
+/** Look up indexed_file id for an existing (project, path) pair. */
+export async function getIndexedFileId(
+  projectId: string,
+  filePath: string
+): Promise<string | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("indexed_files")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("file_path", filePath)
+    .maybeSingle();
+  if (error) {
+    logger.error("DB: lookup indexed_file id failed", { error: error.message, filePath });
+    return null;
+  }
+  return (data as { id: string } | null)?.id ?? null;
 }
 
 // ── CIE: symbols ───────────────────────────────────────────

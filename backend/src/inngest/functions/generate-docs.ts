@@ -6,7 +6,9 @@
 
 import { inngest } from "../client.js";
 import { planDocJobs } from "../../modules/cie/generation/diataxis-router.js";
+import { finalizeGeneratedDocLinks, generateDocPage } from "../../modules/cie/generation/doc-generator.js";
 import { regenerateIdeaDocs } from "../../modules/cie/generation/regenerate-idea.js";
+import { runWithConcurrency } from "../../modules/cie/generation/concurrency.js";
 import { getProjectById, updateCieStatus } from "../../db/index.js";
 import { finalizeGeneratedDocLinks, generateDocPage } from "../../modules/cie/generation/doc-generator.js";
 import { logger } from "../../logger/index.js";
@@ -45,6 +47,8 @@ export const generateDocsFn = inngest.createFunction(
 
     logger.info("Generate docs: planned jobs", { projectId, jobCount: jobs.length });
 
+    // Mirror the direct route: transition to "generating" and record page count
+    // so the progress UI works when Inngest is driving the pipeline.
     await step.run("mark-generating", () =>
       updateCieStatus(projectId, "generating", { docsPlanned: jobs.length })
     );
@@ -58,18 +62,25 @@ export const generateDocsFn = inngest.createFunction(
     for (const job of jobs) {
       job.projectSlug = project?.slug ?? undefined;
       job.siblingPages = siblingPages;
+    }
+
+    const concurrency = Math.max(1, Number(process.env.DOC_GEN_CONCURRENCY ?? 3));
+    const results = await runWithConcurrency(jobs, concurrency, (job) => {
       const stepId = `generate-${job.slug.replace(/\//g, "-")}`;
-      await step.run(stepId, () => generateDocPage(job));
+      return step.run(stepId, () => generateDocPage(job));
+    });
+
+    const failed = results.filter((r) => !r.ok).length;
+    if (failed > 0) {
+      logger.warn("Generate docs: some pages failed", { projectId, failed, total: jobs.length });
     }
 
     await step.run("finalize-doc-links", () =>
-      finalizeGeneratedDocLinks(projectId, project.slug ?? undefined)
+      finalizeGeneratedDocLinks(projectId, project?.slug ?? undefined)
     );
 
     await step.run("mark-indexed", () => updateCieStatus(projectId, "indexed"));
 
-    logger.info("Generate docs: complete", { projectId, generated: jobs.length });
-
-    return { generated: jobs.length };
+    return { generated: jobs.length - failed, failed };
   }
 );
